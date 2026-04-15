@@ -51,10 +51,12 @@ export const lesson1: Lesson = {
     {
       type: "prose",
       content: `
-        <p>Drag the capacity constraint (blue) outward slowly. Watch the profit increase.
-        The rate of increase IS the shadow price.</p>
-        <p>Now try dragging the labor constraint (green). If it's not binding (the optimal
-        point isn't on it), dragging it has no effect. Its shadow price is zero.</p>
+        <p>Drag the <strong>machine_time</strong> constraint (orange) outward slowly. The optimal
+        point sits right on it — it's binding. Watch the profit increase as you give the
+        factory more machine capacity. The rate of increase IS the shadow price.</p>
+        <p>Now try dragging the <strong>capacity</strong> constraint (blue). It's not binding —
+        the optimal point isn't touching it. Dragging it has no effect on the profit.
+        Its shadow price is zero.</p>
         <p>Key rules:</p>
         <ul>
           <li><strong>Binding constraints</strong> (slack = 0) typically have nonzero shadow prices</li>
