@@ -46,11 +46,15 @@ export const lesson1: Lesson = {
         show_gradient_arrow: true,
         show_vertex_labels: true,
         highlight_optimal: true,
+        show_integer_lattice: true,
       },
     },
     {
       type: "prose",
       content: `
+        <p>The <strong>yellow dots</strong> are integer-feasible points. The large yellow dot
+        is the best integer solution. The <strong>green dot</strong> is the LP relaxation
+        optimum (which may have fractional coordinates).</p>
         <p>Drag the explorer point to the LP optimal vertex. Now look at the nearest
         integer points. The rounded point may not even be feasible (it might violate a constraint).
         And even if it's feasible, it's often not the best integer point.</p>

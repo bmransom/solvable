@@ -42,17 +42,20 @@ export const lesson2: Lesson = {
       type: "prediction",
       question: "A MIP solver has been running for 30 seconds. It found a solution with value 100, and the best remaining LP bound is 102. The MIP gap is 2%. Should you stop?",
       options: [
-        "No — keep running until you find the optimal solution",
-        "It depends on whether 2% matters for your application",
-        "Yes — 2% gap means the solution is within 2% of optimal, which is good enough for most applications",
+        "No — always keep running until you find the proven optimal solution",
+        "It depends — 2% might be excellent or unacceptable depending on your application",
+        "Yes — 2% is always good enough",
       ],
-      correct_index: 2,
-      explanation: `In practice, a 2% MIP gap is excellent. The solver has proven that no solution can be
-        more than 2% better than what you have. For most business applications, this is good enough.
-        Closing the last 2% could take 10x longer than getting to 2%.
+      correct_index: 1,
+      explanation: `The right answer depends on context. A 2% gap means the solver has proven no solution
+        can be more than 2% better than what you have. For a warehouse routing problem, that's
+        excellent — the data uncertainty alone is larger than 2%. For a high-frequency trading model
+        where 0.1% matters, it's not enough.
         <br><br>
-        Setting a <strong>MIP gap tolerance</strong> (e.g., stop at 1% or 5%) is standard practice.
-        The solver returns the best known solution along with a proof of how close to optimal it is.`,
+        The key discipline: <strong>decide your gap tolerance before you solve, based on your
+        application's sensitivity to optimality.</strong> Setting a MIP gap tolerance (e.g., stop
+        at 1% or 5%) is standard practice. Also consider: closing the last 2% often takes 10x
+        longer than getting to 2%. Is that compute time worth the improvement?`,
     },
     {
       type: "go_deeper",

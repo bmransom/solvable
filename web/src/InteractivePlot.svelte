@@ -21,6 +21,7 @@
     show_gradient_arrow: boolean;
     show_vertex_labels: boolean;
     highlight_optimal: boolean;
+    show_integer_lattice?: boolean;
     sliders?: unknown[];
   }
 
@@ -34,6 +35,7 @@
     show_gradient_arrow,
     show_vertex_labels,
     highlight_optimal,
+    show_integer_lattice = false,
   }: Props = $props();
 
   // Mutable copy of the model for interactive manipulation
@@ -199,6 +201,39 @@
       },
     };
   });
+
+  // Integer lattice points within the viewport
+  const integer_lattice_points = $derived.by(() => {
+    if (!show_integer_lattice) return [];
+    const viewport = geometry.viewport;
+    const points: Array<{ x: number; y: number; feasible: boolean; objective: number }> = [];
+    const x_start = Math.max(0, Math.ceil(viewport.x_min));
+    const x_end = Math.floor(viewport.x_max);
+    const y_start = Math.max(0, Math.ceil(viewport.y_min));
+    const y_end = Math.floor(viewport.y_max);
+
+    for (let ix = x_start; ix <= x_end; ix++) {
+      for (let iy = y_start; iy <= y_end; iy++) {
+        const point = { x: ix, y: iy };
+        const feasible = model.constraints.every(
+          (c) => !c.enabled || point_satisfies_constraint(point, c)
+        );
+        const objective = evaluate_objective_at(point, model);
+        points.push({ ...point, feasible, objective });
+      }
+    }
+    return points;
+  });
+
+  // Best integer feasible point
+  const best_integer_point = $derived.by(() => {
+    const feasible_points = integer_lattice_points.filter((p) => p.feasible);
+    if (feasible_points.length === 0) return null;
+    const is_max = model.objective.sense === "max";
+    return feasible_points.reduce((best, p) =>
+      (is_max ? p.objective > best.objective : p.objective < best.objective) ? p : best
+    );
+  });
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -260,6 +295,40 @@
         stroke-opacity="0.3"
         stroke-width="1"
       />
+    {/if}
+
+    <!-- Integer lattice points -->
+    {#if show_integer_lattice}
+      {#each integer_lattice_points as point}
+        <circle
+          cx={to_svg_x(point.x)}
+          cy={to_svg_y(point.y)}
+          r={point.feasible ? 4 : 2}
+          fill={point.feasible ? "#e5c07b" : "#2a2d3a"}
+          opacity={point.feasible ? 0.9 : 0.4}
+        />
+      {/each}
+      <!-- Best integer point -->
+      {#if best_integer_point}
+        <circle
+          cx={to_svg_x(best_integer_point.x)}
+          cy={to_svg_y(best_integer_point.y)}
+          r="7"
+          fill="#e5c07b"
+          stroke="white"
+          stroke-width="2"
+        />
+        <text
+          x={to_svg_x(best_integer_point.x) - 12}
+          y={to_svg_y(best_integer_point.y) - 12}
+          fill="#e5c07b"
+          font-size="11"
+          font-weight="600"
+          text-anchor="end"
+        >
+          best integer ({best_integer_point.x}, {best_integer_point.y}) = {best_integer_point.objective.toFixed(1)}
+        </text>
+      {/if}
     {/if}
 
     <!-- Constraint lines -->
