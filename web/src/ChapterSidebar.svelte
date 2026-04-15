@@ -46,12 +46,12 @@
         <button
           class="chapter-button"
           onclick={() => {
-            if (chapter.lessons.length > 0) {
+            if (chapter.lessons.length > 0 || chapter.is_sandbox) {
               on_select_chapter(chapter.id);
-              toggle_expand(chapter.id);
+              if (!chapter.is_sandbox) toggle_expand(chapter.id);
             }
           }}
-          disabled={chapter.lessons.length === 0}
+          disabled={chapter.lessons.length === 0 && !chapter.is_sandbox}
         >
           <span class="chapter-status-icon" class:complete={status === "complete"} class:in-progress={status === "in-progress"}>
             {#if status === "complete"}

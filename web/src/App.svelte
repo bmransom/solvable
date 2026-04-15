@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import ChapterSidebar from "./ChapterSidebar.svelte";
   import LessonView from "./LessonView.svelte";
+  import SandboxView from "./SandboxView.svelte";
   import { CHAPTERS, findChapter, findLesson } from "./chapters/index";
   import { progress, navigate_to, complete_lesson, type Progress } from "./progress";
   import { initializeParser } from "./parser";
@@ -43,10 +44,17 @@
 
   function handle_select_chapter(chapter_id: string) {
     const chapter = findChapter(chapter_id);
-    if (chapter && chapter.lessons.length > 0) {
+    if (!chapter) return;
+    if (chapter.is_sandbox) {
+      current_chapter = chapter;
+      current_lesson = undefined;
+      navigate_to(chapter.id, "");
+    } else if (chapter.lessons.length > 0) {
       navigate_to(chapter.id, chapter.lessons[0].id);
     }
   }
+
+  const is_sandbox = $derived(current_chapter?.is_sandbox === true);
 
   function handle_select_lesson(chapter_id: string, lesson_id: string) {
     navigate_to(chapter_id, lesson_id);
@@ -113,8 +121,10 @@
     on_select_lesson={handle_select_lesson}
   />
 
-  <main class="lesson-main">
-    {#if current_lesson}
+  <main class="lesson-main" class:sandbox-main={is_sandbox}>
+    {#if is_sandbox}
+      <SandboxView />
+    {:else if current_lesson}
       {#key `${progress_state.current_chapter}/${progress_state.current_lesson}`}
         <LessonView lesson={current_lesson} />
       {/key}
@@ -163,6 +173,10 @@
     flex: 1;
     overflow-y: auto;
     min-width: 0;
+  }
+
+  .sandbox-main {
+    overflow: hidden;
   }
 
   .lesson-footer {
