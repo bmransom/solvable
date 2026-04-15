@@ -49,8 +49,9 @@ export const lesson2: Lesson = {
       correct_index: 1,
       explanation: `The right answer depends on context. A 2% gap means the solver has proven no solution
         can be more than 2% better than what you have. For a warehouse routing problem, that's
-        excellent — the data uncertainty alone is larger than 2%. For a high-frequency trading model
-        where 0.1% matters, it's not enough.
+        excellent — the data uncertainty alone is larger than 2%. But for a large-scale supply chain
+        network or capital allocation where the objective is measured in billions of dollars, 2%
+        could mean tens of millions left on the table.
         <br><br>
         The key discipline: <strong>decide your gap tolerance before you solve, based on your
         application's sensitivity to optimality.</strong> Setting a MIP gap tolerance (e.g., stop
