@@ -45,6 +45,7 @@
       <div class="chapter-item" class:current={is_current}>
         <button
           class="chapter-button"
+          class:sandbox-button={chapter.is_sandbox}
           onclick={() => {
             if (chapter.lessons.length > 0 || chapter.is_sandbox) {
               on_select_chapter(chapter.id);
@@ -157,6 +158,12 @@
   .chapter-button:disabled {
     color: #3a3f52;
     cursor: not-allowed;
+  }
+
+  .sandbox-button {
+    border-top: 1px solid #2a2d3a;
+    margin-top: 0.25rem;
+    padding-top: 0.75rem;
   }
 
   .chapter-status-icon {

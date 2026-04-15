@@ -19,18 +19,22 @@
 
   progress.subscribe((value) => {
     progress_state = value;
+    const chapter = findChapter(value.current_chapter);
+
+    if (chapter?.is_sandbox) {
+      current_chapter = chapter;
+      current_lesson = undefined;
+      return;
+    }
+
     const found = findLesson(value.current_chapter, value.current_lesson);
     if (found) {
       current_chapter = found.chapter;
       current_lesson = found.lesson;
-    } else {
-      // Fall back to first lesson of current chapter
-      const chapter = findChapter(value.current_chapter);
-      if (chapter && chapter.lessons.length > 0) {
-        current_chapter = chapter;
-        current_lesson = chapter.lessons[0];
-        navigate_to(chapter.id, chapter.lessons[0].id);
-      }
+    } else if (chapter && chapter.lessons.length > 0) {
+      current_chapter = chapter;
+      current_lesson = chapter.lessons[0];
+      navigate_to(chapter.id, chapter.lessons[0].id);
     }
   });
 
