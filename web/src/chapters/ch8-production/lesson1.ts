@@ -1,93 +1,93 @@
 import type { Lesson } from "../types";
 
 export const lesson1: Lesson = {
-  id: "solver-as-a-service",
-  title: "The Solver as a Service",
+  id: "time-limits-and-fallbacks",
+  title: "Time Limits and Fallbacks",
   blocks: [
     {
       type: "prose",
       content: `
         <p>You've learned to formulate and solve optimization problems. Now the question
-        is: how do you put this into a production system that runs reliably, handles
-        failures, and serves results to other services?</p>
-      `,
-    },
-    {
-      type: "prose",
-      content: `
-        <h3>Architecture pattern: solve behind an API</h3>
-        <p>The standard pattern is a service that accepts problem data, builds the model,
-        solves it, and returns the solution. The caller doesn't know or care that an LP
-        solver is involved.</p>
-        <pre><code>POST /api/optimize-routes
-{
-  "warehouses": [...],
-  "orders": [...],
-  "vehicles": [...]
-}
-
-→ 200 OK
-{
-  "routes": [...],
-  "total_cost": 4523.50,
-  "solve_time_ms": 340,
-  "gap": 0.01
-}</code></pre>
-        <p>The model construction, solver call, and solution interpretation all happen
-        server-side. The API consumer sees a domain-specific interface, not an LP.</p>
+        is: how do you run a solver in production where reliability matters more than
+        optimality?</p>
       `,
     },
     {
       type: "prose",
       content: `
         <h3>Time limits are not optional</h3>
-        <p>Every production solver call needs a time limit. MIP solve times are
-        unpredictable — a problem that usually solves in 2 seconds might take 20 minutes
-        on a slightly different input. Without a time limit, one bad input can hang your
-        service.</p>
-        <p>Set the time limit based on your SLA, not the problem. If your service needs
-        to respond in 5 seconds, set the solver time limit to 3 seconds (leaving room for
-        model construction and response formatting).</p>
-        <p>When the time limit hits, return the <strong>incumbent</strong> (best solution
-        found so far) along with the MIP gap. A 2% suboptimal solution delivered on time
-        is better than the optimal solution delivered never.</p>
+        <p>Every production solver call needs a time limit. Solve times can be
+        unpredictable — especially for MIPs, where a problem that usually solves in
+        2 seconds might take 20 minutes on a slightly different input. Even pure LPs
+        can occasionally stall on poorly conditioned instances. Without a time limit,
+        one bad input can hang your system.</p>
+        <p>When the time limit hits:</p>
+        <ul>
+          <li><strong>For MIP</strong>: the solver returns the <strong>incumbent</strong>
+          (best integer solution found so far) along with the MIP gap. A 2% suboptimal
+          solution delivered on time is better than the optimal solution delivered never.</li>
+          <li><strong>For LP</strong>: hitting a time limit is rarer, but it happens with
+          very large or numerically difficult models. The solver may return the last feasible
+          basis found, or report no solution.</li>
+        </ul>
+      `,
+    },
+    {
+      type: "prose",
+      content: `
+        <h3>Handling solver status codes</h3>
+        <p>Every solver returns a status with the solution. Your code must handle each one:</p>
+        <ul>
+          <li><strong>Optimal</strong>: the solver found and proved the best solution. Use it.</li>
+          <li><strong>Time limit / Iteration limit</strong>: the solver ran out of time. For MIP,
+          check if there's an incumbent — if so, use it with the gap noted. For LP, this usually
+          indicates a problem (poorly scaled model, numerical issues).</li>
+          <li><strong>Infeasible</strong>: no solution satisfies all constraints. Don't retry with
+          the same input. Log the infeasibility, alert if unexpected, and fall back.</li>
+          <li><strong>Unbounded</strong>: the objective can improve forever. This is a modeling bug —
+          a missing constraint. Log it, alert, and fall back.</li>
+          <li><strong>Error / Numerical issues</strong>: the solver failed internally. Log the full
+          error, fall back, and investigate the specific input that caused it.</li>
+        </ul>
+        <p>The pattern: <code>switch on status, handle each case, never assume Optimal.</code></p>
       `,
     },
     {
       type: "prediction",
-      question: "Your optimization service has a 10-second SLA. The solver usually finishes in 3 seconds but occasionally takes 60+. What should you do?",
+      question: "Your solver returns 'Time limit' with an incumbent solution and a 3% MIP gap. What do you do?",
       options: [
-        "Set the solver time limit to 10 seconds — match the SLA",
-        "Set the solver time limit to 7-8 seconds and return the incumbent if it hits the limit, with the gap reported in the response",
-        "Run the solver asynchronously and have the client poll for results",
+        "Discard the result and retry with a longer time limit",
+        "Use the incumbent — it's a feasible solution within 3% of optimal — and log the gap for monitoring",
+        "Report an error to the caller",
       ],
       correct_index: 1,
-      explanation: `Leave headroom between the solver time limit and your SLA for model construction,
-        solution extraction, and network overhead. Return the incumbent + gap when the limit hits.
-        The async pattern (option 3) is valid for batch workloads but adds complexity for
-        request-response APIs.`,
+      explanation: `The incumbent is a valid, feasible solution. The 3% gap means no solution can be more than 3%
+        better. For most applications, this is good enough. Log the gap so you can monitor whether
+        time-limit hits are becoming frequent (which would indicate the problem is growing harder).
+        Retrying with a longer time limit wastes time if you're already within tolerance.`,
     },
     {
       type: "prose",
       content: `
         <h3>Fallback strategies</h3>
-        <p>What happens when the solver fails entirely? Crashes, returns infeasible on
-        valid input, or times out with no incumbent?</p>
+        <p>What happens when the solver fails entirely — infeasible on valid input,
+        error, or time limit with no incumbent?</p>
         <ul>
           <li><strong>Cached solution</strong>: return the last known good solution for similar input.
-          Often "yesterday's optimal plan" is better than "no plan."</li>
+          "Yesterday's optimal plan" is often better than "no plan."</li>
           <li><strong>Heuristic fallback</strong>: a fast greedy algorithm that produces a feasible
           (but not optimal) solution in milliseconds. Always have one ready.</li>
-          <li><strong>Relaxed solve</strong>: drop the integer requirements and return the LP
-          relaxation solution. It won't be implementable directly but gives useful direction.</li>
+          <li><strong>Relaxed solve</strong>: for MIP failures, drop the integer requirements and
+          return the LP relaxation. It won't be directly implementable (fractional assignments) but
+          gives useful direction. For LP failures, this option doesn't apply.</li>
         </ul>
         <p>The key principle: <strong>never return nothing.</strong> A suboptimal answer is
-        almost always better than an error page.</p>
+        almost always better than an error.</p>
       `,
     },
     {
       type: "checkpoint",
-      message: "You know the production pattern: solver behind an API, always set time limits, always have a fallback.",
+      message: "You handle every solver status code, always set time limits, and always have a fallback when the solver can't help.",
     },
   ],
 };

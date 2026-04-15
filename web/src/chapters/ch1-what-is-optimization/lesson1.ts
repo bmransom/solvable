@@ -1,8 +1,8 @@
 import type { Lesson } from "../types";
 
 export const lesson1: Lesson = {
-  id: "your-first-optimization",
-  title: "Your First Optimization Problem",
+  id: "maximize-profit",
+  title: "Maximize Profit",
   blocks: [
     {
       type: "prose",

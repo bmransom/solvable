@@ -20,7 +20,7 @@ function load_from_storage(): Progress {
   return {
     completed_lessons: [],
     current_chapter: "ch1-what-is-optimization",
-    current_lesson: "your-first-optimization",
+    current_lesson: "maximize-profit",
   };
 }
 
@@ -66,6 +66,6 @@ export function reset_progress() {
   progress.set({
     completed_lessons: [],
     current_chapter: "ch1-what-is-optimization",
-    current_lesson: "your-first-optimization",
+    current_lesson: "maximize-profit",
   });
 }

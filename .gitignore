@@ -1,9 +1,10 @@
+# Specs (local only)
+.kiro/
+
 # Node
 web/node_modules/
 web/dist/
 
-# Spike
-spike/node_modules/
 
 # OS
 .DS_Store
