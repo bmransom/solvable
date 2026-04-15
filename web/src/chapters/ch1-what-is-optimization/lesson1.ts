@@ -7,6 +7,21 @@ export const lesson1: Lesson = {
     {
       type: "prose",
       content: `
+        <p>Optimization is about making the best decision under constraints.
+        You have a goal (maximize profit, minimize cost, reduce waste) and
+        limits on what's possible (budgets, capacities, deadlines). A <strong>solver</strong>
+        is software that finds the best solution automatically — you describe the problem
+        mathematically, and the solver does the search.</p>
+        <p>You don't write the search algorithm. You write the <em>model</em> — the
+        variables, constraints, and objective — and the solver handles the rest.
+        This tutorial teaches you how to build those models and understand what the
+        solver tells you.</p>
+        <p>Let's start with a concrete example.</p>
+      `,
+    },
+    {
+      type: "prose",
+      content: `
         <p>A factory makes two products: <strong>chairs</strong> and <strong>tables</strong>.</p>
         <p>Each chair earns <strong>$5</strong> profit. Each table earns <strong>$4</strong> profit.</p>
         <p>Your job: <em>make as much money as possible.</em></p>
