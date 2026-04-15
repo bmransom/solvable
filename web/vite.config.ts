@@ -6,9 +6,6 @@ export default defineConfig({
   server: {
     port: 5188,
   },
-  optimizeDeps: {
-    exclude: ["solvable-wasm"],
-  },
   build: {
     target: "esnext",
   },

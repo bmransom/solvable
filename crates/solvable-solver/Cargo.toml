@@ -1,9 +1,0 @@
-[package]
-name = "solvable-solver"
-description = "HiGHS solver integration for native testing and reference solutions"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-
-[dependencies]
-solvable-core = { path = "../solvable-core" }
