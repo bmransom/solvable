@@ -1,8 +1,8 @@
 import type { Lesson } from "../types";
 
 export const lesson1: Lesson = {
-  id: "rounding-doesnt-work",
-  title: "Rounding Doesn't Work",
+  id: "when-rounding-breaks",
+  title: "When Rounding Breaks Down",
   blocks: [
     {
       type: "prose",
@@ -18,11 +18,31 @@ export const lesson1: Lesson = {
     {
       type: "prose",
       content: `
-        <p>The naive approach: solve the LP relaxation (ignore the integer requirement),
-        then round to the nearest integer. This seems reasonable. It's also wrong.</p>
-        <p>In the plot below, the feasible region is the same polygon. But the integer-feasible
-        points are only the <strong>dots at grid intersections</strong> inside the region.
-        The LP optimum (fractional) may be far from the best integer point.</p>
+        <p>A natural instinct: solve the LP relaxation (ignore the integer requirement),
+        then round to the nearest integer. Sometimes this works surprisingly well.
+        Sometimes it fails catastrophically. Understanding <em>when</em> it fails is the key.</p>
+      `,
+    },
+    {
+      type: "prose",
+      content: `
+        <h3>When rounding is reasonable</h3>
+        <p>If the LP relaxation gives x = 47.3 trucks, rounding to 47 or 48 is often
+        a decent approximation. The variables are large, the rounding error is small relative
+        to the total, and the rounded solution is likely still feasible (or close to it).</p>
+        <p>Many practitioners use "solve the LP, round, check feasibility" as a fast heuristic
+        for problems where near-optimal is good enough.</p>
+
+        <h3>When rounding is dangerous</h3>
+        <p>Rounding breaks down in two situations:</p>
+        <ul>
+          <li><strong>Binary decisions</strong>: "Open warehouse A or not?" gives x = 0.6.
+          Rounding to 1 means "open it" — but 0.6 meant the LP was hedging, using a fraction
+          of the warehouse's capacity. The rounded solution may violate capacity constraints
+          or produce a very different cost structure.</li>
+          <li><strong>Tight constraints</strong>: When the feasible region is narrow, rounding
+          a fractional point can land you outside it entirely. The rounded solution is infeasible.</li>
+        </ul>
       `,
     },
     {
@@ -55,30 +75,49 @@ export const lesson1: Lesson = {
         <p>The <strong>yellow dots</strong> are integer-feasible points. The large yellow dot
         is the best integer solution. The <strong>green dot</strong> is the LP relaxation
         optimum (which may have fractional coordinates).</p>
-        <p>Drag the explorer point to the LP optimal vertex. Now look at the nearest
-        integer points. The rounded point may not even be feasible (it might violate a constraint).
-        And even if it's feasible, it's often not the best integer point.</p>
-        <p>This is why integer programming is fundamentally harder than LP: you can't just
-        solve the relaxation and round.</p>
+        <p>Notice: the best integer point is not necessarily the one closest to the LP optimum.
+        Drag the constraints to create different shapes and see how the gap between the LP optimum
+        and the best integer point changes. In some configurations they're close; in others, the
+        nearest integer to the LP solution isn't even the best integer point.</p>
       `,
     },
     {
       type: "prediction",
       question: "If the LP relaxation optimal is 42.7, what can you say about the integer optimal?",
       options: [
-        "It's 42 or 43 (the nearest integers)",
-        "It's at most 42.7 (for maximization) — the LP relaxation is an upper bound",
+        "It's 42 or 43 (the nearest integers to 42.7)",
+        "It's at most 42.7 (for maximization) — the LP relaxation is an upper bound, but the best integer solution could be much lower",
         "You can't say anything without solving the integer problem",
       ],
       correct_index: 1,
       explanation: `The LP relaxation is always a <strong>bound</strong> on the integer optimal. For maximization,
-        the LP optimal is an upper bound (the integer optimal can't be better). For minimization, it's
-        a lower bound. This bound is what makes branch and bound work — the solver uses it to prune
-        branches that can't beat the best known integer solution.`,
+        the LP optimal is an upper bound (the integer optimal can't be better, but could be much worse).
+        For minimization, it's a lower bound. The gap between the LP bound and the best known integer
+        solution is the <strong>MIP gap</strong> — and it's what makes branch and bound work. The solver
+        uses it to prune branches that provably can't beat the best integer solution found so far.`,
+    },
+    {
+      type: "go_deeper",
+      title: "The integrality gap",
+      content: `
+        <p>The worst-case ratio between the LP relaxation optimum and the integer optimum
+        is called the <strong>integrality gap</strong>. It depends on the problem structure:</p>
+        <ul>
+          <li><strong>Assignment problems</strong>: integrality gap is 0 — the LP relaxation
+          naturally gives integer solutions (the constraint matrix is "totally unimodular").
+          You get integer solutions for free!</li>
+          <li><strong>Knapsack problems</strong>: the gap is usually small. Rounding works
+          reasonably well.</li>
+          <li><strong>Facility location with big-M</strong>: the gap can be enormous.
+          A loose big-M makes the LP relaxation nearly useless as a bound.</li>
+        </ul>
+        <p>This is why formulation matters: a tighter formulation has a smaller integrality
+        gap, which means less work for the solver.</p>
+      `,
     },
     {
       type: "checkpoint",
-      message: "You understand why rounding fails and that the LP relaxation provides a bound on the integer optimal.",
+      message: "You understand when rounding works (large quantities, loose constraints) vs. when it fails (binary decisions, tight constraints), and that the LP relaxation always provides a bound.",
     },
   ],
 };
