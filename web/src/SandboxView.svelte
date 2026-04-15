@@ -2,10 +2,12 @@
   import { onMount, onDestroy } from "svelte";
   import EditorPanel from "./EditorPanel.svelte";
   import ResultsPanel from "./ResultsPanel.svelte";
+  import InteractivePlot from "./InteractivePlot.svelte";
   import { SolverManager } from "./solver";
   import { parse } from "./parser";
   import { DEFAULT_EXAMPLE, EXAMPLES, type Example } from "./examples";
   import type { ParseResult, SolveResult, SolverState } from "./types";
+  import type { PlotModel } from "./plot-model";
 
   let editor_text = $state(DEFAULT_EXAMPLE.lp_text);
   let parse_result: ParseResult | null = $state(null);
@@ -79,6 +81,49 @@
 
   const is_solving = $derived(solver_state === "solving");
   const can_solve = $derived(solver_state === "ready" && !is_solving);
+
+  const CONSTRAINT_COLORS = ["#4c6ef5", "#f76707", "#20c997", "#be4bdb", "#e64980", "#fab005", "#15aabf", "#82c91e"];
+
+  const plot_model = $derived.by((): PlotModel | null => {
+    if (!parse_result?.model) return null;
+    const model = parse_result.model as any;
+    if (!model.variables || model.variables.length !== 2) return null;
+
+    const var_names: [string, string] = [model.variables[0].name, model.variables[1].name];
+    const objective = model.objective;
+    if (!objective?.terms) return null;
+
+    const obj_coefficients: [number, number] = [0, 0];
+    for (const term of objective.terms) {
+      if (term.variable_name === var_names[0]) obj_coefficients[0] = term.coefficient;
+      if (term.variable_name === var_names[1]) obj_coefficients[1] = term.coefficient;
+    }
+
+    const constraints = (model.constraints ?? []).map((constraint: any, index: number) => {
+      const coefficients: [number, number] = [0, 0];
+      for (const term of constraint.expression.terms) {
+        if (term.variable_name === var_names[0]) coefficients[0] = term.coefficient;
+        if (term.variable_name === var_names[1]) coefficients[1] = term.coefficient;
+      }
+      return {
+        name: constraint.name ?? `c${index + 1}`,
+        coefficients,
+        operator: constraint.operator as "<=" | ">=" | "=",
+        rhs: constraint.rhs,
+        enabled: true,
+        color: CONSTRAINT_COLORS[index % CONSTRAINT_COLORS.length],
+      };
+    });
+
+    return {
+      variables: var_names,
+      objective: {
+        coefficients: obj_coefficients,
+        sense: model.sense === "Minimize" ? "min" as const : "max" as const,
+      },
+      constraints,
+    };
+  });
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -112,6 +157,23 @@
         {solve_error}
         {solver_state}
       />
+      {#if plot_model}
+        <div class="plot-section">
+          {#key JSON.stringify(plot_model)}
+            <InteractivePlot
+              model={plot_model}
+              allow_drag_constraints={true}
+              allow_drag_objective={false}
+              allow_drag_point={true}
+              allow_toggle_constraints={true}
+              show_objective_contour={true}
+              show_gradient_arrow={true}
+              show_vertex_labels={true}
+              highlight_optimal={true}
+            />
+          {/key}
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -160,6 +222,11 @@
     flex-direction: column;
     min-height: 0;
     overflow: auto;
+  }
+
+  .plot-section {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid #2a2d3a;
   }
 
   @media (max-width: 768px) {
