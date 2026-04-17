@@ -18,7 +18,7 @@ export const lesson5: Lesson = {
         <h3>What a solver actually does</h3>
         <p>A solver takes your model (variables, constraints, objective) and finds the
         optimal solution using algorithms like the simplex method, interior point methods,
-        and branch and bound. All solvers implement these same core algorithms - the
+        and branch and bound. All solvers implement these same core algorithms. The
         differences are in how well they're tuned, how they handle edge cases, and what
         features they offer on top.</p>
         <p>Choosing a solver is like choosing a database: they all store and query data,
@@ -85,7 +85,7 @@ export const lesson5: Lesson = {
           HiGHS may be fine.</li>
           <li><strong>If solving millions of small models</strong> (e.g., per-request pricing):
           solver startup overhead matters. Gurobi and CPLEX have optimized APIs for
-          repeated solves. Also consider whether you even need a solver - for very
+          repeated solves. Also consider whether you even need a solver. For very
           simple models, a direct algorithm may be faster.</li>
         </ol>
       `,
@@ -96,8 +96,8 @@ export const lesson5: Lesson = {
         <h3>How you'll interact with a solver</h3>
         <p>There are two approaches, and both are common:</p>
         <p><strong>Direct solver APIs</strong>: you call the solver's C, C++, or Python API
-        to build the model programmatically - <code>addVariable()</code>, <code>addConstraint()</code>,
-        <code>optimize()</code>. This gives full control over model construction, solver parameters,
+        to build the model programmatically (<code>addVariable()</code>, <code>addConstraint()</code>,
+        <code>optimize()</code>). This gives full control over model construction, solver parameters,
         and solution extraction. Most production systems work this way.</p>
         <p><strong>Modeling layers</strong>: higher-level libraries that let you write models
         more concisely and swap solvers without rewriting code:</p>

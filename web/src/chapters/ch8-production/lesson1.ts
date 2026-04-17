@@ -49,7 +49,7 @@ export const lesson1: Lesson = {
         <ul>
           <li><strong>Optimal</strong>: the solver found and proved the best solution. Use it.</li>
           <li><strong>Time limit / Iteration limit</strong>: the solver ran out of time. For MIP,
-          check if there's an incumbent - if so, use it with the gap noted. For LP, this usually
+          check if there's an incumbent. If so, use it with the gap noted. For LP, this usually
           indicates a problem (poorly scaled model, numerical issues).</li>
           <li><strong>Infeasible</strong>: no solution satisfies all constraints. Don't retry with
           the same input. Log the infeasibility, alert if unexpected, and fall back.</li>
@@ -79,8 +79,8 @@ export const lesson1: Lesson = {
       type: "prose",
       content: `
         <h3>Fallback strategies</h3>
-        <p>What happens when the solver fails entirely - infeasible on valid input,
-        error, or time limit with no incumbent?</p>
+        <p>What happens when the solver fails entirely (infeasible on valid input,
+        error, or time limit with no incumbent)?</p>
         <ul>
           <li><strong>Cached solution</strong>: return the last known good solution for similar input.
           "Yesterday's optimal plan" is often better than "no plan."</li>

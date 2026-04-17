@@ -7,12 +7,12 @@ export const lesson2: Lesson = {
     {
       type: "prose",
       content: `
-        <p>What makes optimization interesting is <strong>constraints</strong> - the limits that
+        <p>What makes optimization interesting is <strong>constraints</strong>: the limits that
         define what's possible.</p>
         <p>Each constraint is a line that cuts the plane in half. The feasible region is where
         <em>all</em> constraints are satisfied simultaneously.</p>
         <p>Use the checkboxes below the plot to <strong>toggle constraints on and off</strong>.
-        Watch how the feasible region changes shape - and how the optimal point moves.</p>
+        Watch how the feasible region changes shape and how the optimal point moves.</p>
       `,
     },
     {
@@ -49,7 +49,7 @@ export const lesson2: Lesson = {
       correct_index: 2,
       explanation: `Removing a constraint can only <em>expand</em> the feasible region (or leave it unchanged).
         A larger feasible region means the solver has more room to find a better solution. Constraints
-        are restrictions - removing one can never make things worse.`,
+        are restrictions, so removing one can never make things worse.`,
     },
     {
       type: "prose",

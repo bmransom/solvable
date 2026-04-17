@@ -69,7 +69,7 @@ export const lesson2: Lesson = {
     },
     {
       type: "checkpoint",
-      message: "You understand warm starting and incremental re-solving - the key techniques for production optimization systems that solve repeatedly.",
+      message: "You understand warm starting and incremental re-solving, the key techniques for production optimization systems that solve repeatedly.",
     },
   ],
 };

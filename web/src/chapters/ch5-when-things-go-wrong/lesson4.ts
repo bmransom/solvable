@@ -19,8 +19,8 @@ export const lesson4: Lesson = {
       type: "prose",
       content: `
         <h3>1. Coefficient scaling</h3>
-        <p>If your model mixes very large and very small numbers - a constraint with
-        coefficients of 0.001 and 1,000,000 - the solver may lose precision. The
+        <p>If your model mixes very large and very small numbers (say, a constraint with
+        coefficients of 0.001 and 1,000,000) the solver may lose precision. The
         condition number of the basis matrix blows up, and simplex pivots accumulate
         rounding errors.</p>
         <p><strong>Fix</strong>: rescale your model so coefficients are within a few orders
@@ -70,7 +70,7 @@ export const lesson4: Lesson = {
         a coefficient of 999999 in the constraint matrix. This worsens the condition number
         and can cause the solver to report infeasible solutions as optimal, or vice versa.</p>
         <p><strong>Fix</strong>: as before, make M as small as possible. But also watch for
-        solver warnings about numerical issues - most solvers log these if you enable
+        solver warnings about numerical issues. Most solvers log these if you enable
         verbose output.</p>
       `,
     },
@@ -103,13 +103,13 @@ export const lesson4: Lesson = {
           <li>The solution has variables at unexpected values (e.g., a quantity of -1e-7)</li>
         </ul>
         <p>When you see these signs: check coefficient scaling, check for big-M constraints,
-        and try the barrier (interior point) method instead of simplex - it's often more
+        and try the barrier (interior point) method instead of simplex, which is often more
         numerically stable for poorly scaled problems.</p>
       `,
     },
     {
       type: "checkpoint",
-      message: "You know the common numerical pitfalls: scaling, tolerance, near-zero variables, and big-M instability - and how to defend against them.",
+      message: "You know the common numerical pitfalls: scaling, tolerance, near-zero variables, and big-M instability, along with how to defend against them.",
     },
   ],
 };

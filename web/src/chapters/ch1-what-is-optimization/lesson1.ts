@@ -10,10 +10,10 @@ export const lesson1: Lesson = {
         <p>Optimization is about making the best decision under constraints.
         You have a goal (maximize profit, minimize cost, reduce waste) and
         limits on what's possible (budgets, capacities, deadlines). A <strong>solver</strong>
-        is software that finds the best solution automatically - you describe the problem
+        is software that finds the best solution automatically. You describe the problem
         mathematically, and the solver does the search.</p>
-        <p>You don't write the search algorithm. You write the <em>model</em> - the
-        variables, constraints, and objective - and the solver handles the rest.
+        <p>You don't write the search algorithm. You write the <em>model</em> (the
+        variables, constraints, and objective) and the solver handles the rest.
         This tutorial teaches you how to build those models and understand what the
         solver tells you.</p>
         <p>Let's start with a concrete example.</p>
@@ -25,7 +25,7 @@ export const lesson1: Lesson = {
         <p>A factory makes two products: <strong>chairs</strong> and <strong>tables</strong>.</p>
         <p>Each chair earns <strong>$5</strong> profit. Each table earns <strong>$4</strong> profit.</p>
         <p>Your job: <em>make as much money as possible.</em></p>
-        <p>There's a catch - the factory has limited capacity, machine time, and labor.
+        <p>There's a catch: the factory has limited capacity, machine time, and labor.
         You can't make unlimited quantities of either product.</p>
       `,
     },
@@ -72,7 +72,7 @@ export const lesson1: Lesson = {
       ],
       correct_index: 2,
       explanation: `The best point is always at a <strong>corner</strong> (vertex) of the feasible region.
-        This isn't a coincidence - it's a fundamental theorem of linear programming. When you're
+        This isn't a coincidence. It's a fundamental theorem of linear programming. When you're
         maximizing a linear function over a polygon, the maximum always occurs at a vertex.`,
     },
     {
@@ -108,7 +108,7 @@ export const lesson1: Lesson = {
     {
       type: "prose",
       content: `
-        <p>The dashed lines are <strong>iso-profit contours</strong> - every point on the same
+        <p>The dashed lines are <strong>iso-profit contours</strong>. Every point on the same
         dashed line gives the same profit. The arrow shows the direction where profit increases.</p>
         <p>The solver's job is to push the contour line as far as possible in the arrow's direction
         while staying inside the shaded region. The last point it touches is always a corner.</p>

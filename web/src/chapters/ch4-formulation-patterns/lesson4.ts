@@ -21,7 +21,7 @@ export const lesson4: Lesson = {
         <p>The tempting shortcut: combine objectives into one.</p>
         <p><code>minimize 0.7 * cost + 0.3 * late_deliveries</code></p>
         <p>This "works" but hides a critical decision in the weights. Why 0.7 and 0.3?
-        What are the units? Cost is in dollars, late deliveries is a count - you're
+        What are the units? Cost is in dollars, late deliveries is a count, so you're
         adding apples and oranges. Small changes to the weights can produce wildly
         different solutions, and explaining to stakeholders why you picked those weights
         is harder than explaining the actual optimization.</p>
@@ -111,7 +111,7 @@ End
       correct_index: 1,
       explanation: `Lexicographic optimization is the right choice when objectives have a natural priority:
         "first ensure safety, then optimize cost" or "first meet all demand, then minimize fuel."
-        The primary objective is never sacrificed for the secondary - it's a hard priority, not a
+        The primary objective is never sacrificed for the secondary. It's a hard priority, not a
         tradeoff. Weighted sums are better when you genuinely want to trade off between objectives
         (e.g., risk vs. return in a portfolio).`,
     },
@@ -119,8 +119,8 @@ End
       type: "go_deeper",
       title: "Pareto frontiers and multi-objective optimization",
       content: `
-        <p>Lexicographic optimization finds one specific point on the <strong>Pareto frontier</strong>
-        - the set of solutions where you can't improve one objective without worsening another.</p>
+        <p>Lexicographic optimization finds one specific point on the <strong>Pareto frontier</strong>,
+        the set of solutions where you can't improve one objective without worsening another.</p>
         <p>More sophisticated approaches explore the full Pareto frontier:</p>
         <ul>
           <li><strong>ε-constraint method</strong>: fix one objective at various levels, optimize

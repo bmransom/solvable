@@ -65,9 +65,9 @@ End`,
         "LP format doesn't support continuous variables for these problems",
       ],
       correct_index: 1,
-      explanation: `These problems involve discrete choices - you either assign a worker to a task or you don't.
+      explanation: `These problems involve discrete choices: you either assign a worker to a task or you don't.
         You can't assign 0.7 of a worker. Binary variables model this naturally. This is what makes
-        them <strong>integer programs</strong> - and why they can be much harder to solve than pure LPs.
+        them <strong>integer programs</strong>, which is why they can be much harder to solve than pure LPs.
         We'll explore this in Chapter 6.`,
     },
     {

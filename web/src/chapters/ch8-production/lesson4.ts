@@ -58,7 +58,7 @@ Nodes explored: 312`,
           <li>If presolve removes a large fraction of the model (>50% of rows/cols), your
           formulation has a lot of redundancy. This isn't a problem, but it means you might
           be able to simplify the model yourself for clarity.</li>
-          <li>If presolve detects infeasibility, the log will say so immediately - you
+          <li>If presolve detects infeasibility, the log will say so immediately, and you
           don't need to wait for the solve.</li>
           <li>If presolve removes very little, the model is tight. Good for solve time.</li>
         </ul>
@@ -70,7 +70,7 @@ Nodes explored: 312`,
         <h3>Section 2: LP relaxation</h3>
         <pre><code>Optimal LP relaxation: 34521.7 (0.8s)</code></pre>
         <p>The solver first solves the LP relaxation (ignoring integer requirements).
-        This gives the <strong>dual bound</strong> - the best possible value for the
+        This gives the <strong>dual bound</strong>: the best possible value for the
         integer problem.</p>
         <p><strong>What to look for</strong>:</p>
         <ul>
@@ -137,7 +137,7 @@ Nodes explored: 312`,
       type: "go_deeper",
       title: "LP-only logs look different",
       content: `
-        <p>The log above is from a MIP solve. A pure LP log is simpler - there's no
+        <p>The log above is from a MIP solve. A pure LP log is simpler because there's no
         branch and bound section. Instead you'll see:</p>
         <ul>
           <li><strong>Presolve</strong>: same as MIP</li>

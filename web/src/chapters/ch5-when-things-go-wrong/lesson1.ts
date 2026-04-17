@@ -60,7 +60,7 @@ export const lesson1: Lesson = {
         "Find which constraints conflict - the solver can identify the minimal set of conflicting constraints (IIS)",
       ],
       correct_index: 2,
-      explanation: `When a model is infeasible, the objective doesn't matter - there's no feasible solution to optimize.
+      explanation: `When a model is infeasible, the objective doesn't matter because there's no feasible solution to optimize.
         The first step is diagnosing <em>which constraints</em> conflict. Solvers can compute an
         <strong>Irreducible Infeasible Subsystem (IIS)</strong>: the smallest set of constraints that
         are mutually contradictory. This tells you exactly where the conflict is.`,

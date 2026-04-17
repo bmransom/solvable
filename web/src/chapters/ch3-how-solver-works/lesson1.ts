@@ -10,7 +10,7 @@ export const lesson1: Lesson = {
         <p>You've seen that the optimal solution is always at a vertex. So how does
         the solver find it?</p>
         <p>One approach: check every vertex. But a problem with 100 variables could have
-        billions of vertices - checking them all is impossible.</p>
+        billions of vertices, and checking them all is impossible.</p>
         <p>The solver uses a smarter strategy: <strong>start at any vertex, look at
         neighboring vertices, and walk to whichever one improves the objective.</strong>
         Repeat until no neighbor is better. That's the simplex method in one sentence.</p>
@@ -46,11 +46,11 @@ export const lesson1: Lesson = {
         <p>The plot above has more vertices than our factory problem. Drag the explorer
         point to each vertex and note its objective value.</p>
         <p>Now imagine starting at the origin (0, 0). The solver looks at the two edges
-        leaving that vertex - one goes along the x-axis, the other along the y-axis.
+        leaving that vertex: one goes along the x-axis, the other along the y-axis.
         Which direction improves <code>3x + 5y</code> faster? The y-direction (coefficient 5
         is larger). So the solver walks up the y-axis to the next vertex.</p>
         <p>At each vertex, it repeats: "Which neighboring vertex is best?" When no neighbor
-        is better, it stops - and it's guaranteed to be at the global optimum.</p>
+        is better, it stops. At that point, it's guaranteed to be at the global optimum.</p>
       `,
     },
     {
@@ -62,7 +62,7 @@ export const lesson1: Lesson = {
         "It uses random restarts to escape local optima",
       ],
       correct_index: 1,
-      explanation: `The feasible region of a linear program is always <strong>convex</strong> - a polygon
+      explanation: `The feasible region of a linear program is always <strong>convex</strong>, a polygon
         (or higher-dimensional polytope) with no dents or holes. On a convex shape, any local optimum
         is automatically a global optimum. This is why the "greedy walk" strategy of simplex always
         finds the best answer, not just a good one.`,

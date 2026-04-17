@@ -8,14 +8,14 @@ export const lesson2: Lesson = {
       type: "prose",
       content: `
         <p>At each vertex, the solver computes a <strong>reduced cost</strong> for each
-        edge - the rate at which the objective improves per unit of movement along that edge.</p>
+        edge: the rate at which the objective improves per unit of movement along that edge.</p>
         <p>Think of it as: "How much do I gain by taking one step in this direction?"</p>
         <ul>
           <li><strong>Positive reduced cost</strong> (for maximization): moving along this edge improves the objective. The solver should go this way.</li>
           <li><strong>Zero reduced cost</strong>: moving doesn't help or hurt. The solver is indifferent.</li>
           <li><strong>Negative reduced cost</strong>: moving makes things worse. Don't go this way.</li>
         </ul>
-        <p>When ALL reduced costs are non-positive, no direction improves the objective - the
+        <p>When ALL reduced costs are non-positive, no direction improves the objective, so the
         solver is at the optimal vertex.</p>
       `,
     },
@@ -26,7 +26,7 @@ export const lesson2: Lesson = {
         They tell you:</p>
         <ul>
           <li>A variable with reduced cost = 0 is <strong>in the solution</strong> (basic)</li>
-          <li>A variable with negative reduced cost (for maximization) is at its lower bound - increasing it would hurt the objective by that much per unit</li>
+          <li>A variable with negative reduced cost (for maximization) is at its lower bound, and increasing it would hurt the objective by that much per unit</li>
         </ul>
         <p>This connects to sensitivity analysis: the reduced cost tells you exactly how much
         a variable's objective coefficient would need to improve before it becomes worth using.</p>
@@ -36,8 +36,8 @@ export const lesson2: Lesson = {
       type: "go_deeper",
       title: "This is the simplex method",
       content: `
-        <p>What we've described - start at a vertex, compute reduced costs, pivot to the
-        best neighbor, repeat - <em>is</em> the simplex method. Invented by George Dantzig
+        <p>What we've described (start at a vertex, compute reduced costs, pivot to the
+        best neighbor, repeat) <em>is</em> the simplex method. Invented by George Dantzig
         in 1947, it remains one of the most important algorithms in history.</p>
         <p>The formal version uses matrix algebra (the "tableau") to track which constraints
         are binding (the "basis") and to compute the step direction and length. But the

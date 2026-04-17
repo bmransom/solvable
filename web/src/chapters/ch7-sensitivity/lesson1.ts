@@ -10,7 +10,7 @@ export const lesson1: Lesson = {
         <p>Your boss asks: "If we could get 10 more units of machine capacity, how much
         more profit would we make?"</p>
         <p>You could re-solve the model with the updated constraint. Or you could look
-        at the <strong>shadow price</strong> - a number the solver already computed that
+        at the <strong>shadow price</strong>, a number the solver already computed that
         answers this question directly.</p>
       `,
     },
@@ -52,7 +52,7 @@ export const lesson1: Lesson = {
       type: "prose",
       content: `
         <p>Drag the <strong>machine_time</strong> constraint (orange) outward slowly. The optimal
-        point sits right on it - it's binding. Watch the profit increase as you give the
+        point sits right on it, so it's binding. Watch the profit increase as you give the
         factory more machine capacity. The rate of increase IS the shadow price.</p>
         <p>Now try dragging the <strong>capacity</strong> constraint (blue). It's not binding -
         the optimal point isn't touching it. Dragging it has no effect on the profit.
@@ -61,7 +61,7 @@ export const lesson1: Lesson = {
         <ul>
           <li><strong>Binding constraints</strong> (slack = 0) typically have nonzero shadow prices</li>
           <li><strong>Non-binding constraints</strong> (slack > 0) always have shadow price = 0</li>
-          <li>Shadow prices are valid only within an <strong>allowable range</strong> - drag too far and the basis changes</li>
+          <li>Shadow prices are valid only within an <strong>allowable range</strong>. Drag too far and the basis changes</li>
         </ul>
       `,
     },

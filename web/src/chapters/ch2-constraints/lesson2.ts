@@ -53,7 +53,7 @@ export const lesson2: Lesson = {
         It answers: "What would I pay for one more unit of this resource?"</p>
         <p>If the capacity constraint has a shadow price of $3, it means each additional
         unit of capacity is worth $3 of profit. You'd pay up to $3 to get one more unit.</p>
-        <p>Non-binding constraints have a shadow price of zero - they're not limiting you,
+        <p>Non-binding constraints have a shadow price of zero because they're not limiting you,
         so more of that resource is worthless (for now).</p>
         <p>We'll explore this deeply in Chapter 7.</p>
       `,

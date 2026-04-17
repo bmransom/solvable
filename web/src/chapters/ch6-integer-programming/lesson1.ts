@@ -7,7 +7,7 @@ export const lesson1: Lesson = {
     {
       type: "prose",
       content: `
-        <p>So far, our variables have been continuous - you can make 3.7 chairs.
+        <p>So far, our variables have been continuous: you can make 3.7 chairs.
         But many real decisions are discrete: you either build a warehouse or you don't.
         You assign 5 trucks, not 4.6.</p>
         <p><strong>Integer programming (IP)</strong> adds a requirement that some variables
@@ -37,7 +37,7 @@ export const lesson1: Lesson = {
         <p>Rounding breaks down in two situations:</p>
         <ul>
           <li><strong>Binary decisions</strong>: "Open warehouse A or not?" gives x = 0.6.
-          Rounding to 1 means "open it" - but 0.6 meant the LP was hedging, using a fraction
+          Rounding to 1 means "open it," but 0.6 meant the LP was hedging, using a fraction
           of the warehouse's capacity. The rounded solution may violate capacity constraints
           or produce a very different cost structure.</li>
           <li><strong>Tight constraints</strong>: When the feasible region is narrow, rounding
@@ -93,7 +93,7 @@ export const lesson1: Lesson = {
       explanation: `The LP relaxation is always a <strong>bound</strong> on the integer optimal. For maximization,
         the LP optimal is an upper bound (the integer optimal can't be better, but could be much worse).
         For minimization, it's a lower bound. The gap between the LP bound and the best known integer
-        solution is the <strong>MIP gap</strong> - and it's what makes branch and bound work. The solver
+        solution is the <strong>MIP gap</strong>, and it's what makes branch and bound work. The solver
         uses it to prune branches that provably can't beat the best integer solution found so far.`,
     },
     {
