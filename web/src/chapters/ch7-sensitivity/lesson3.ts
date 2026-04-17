@@ -46,6 +46,23 @@ export const lesson3: Lesson = {
     },
     {
       type: "go_deeper",
+      title: "Sensitivity analysis and integer programs",
+      content: `
+        <p>Everything in this chapter applies cleanly to LP with continuous variables.
+        For integer programs (Chapter 6), sensitivity is more subtle.</p>
+        <p>Shadow prices and allowable ranges assume the same basis (and therefore the
+        same set of active constraints) remains optimal. In a MIP, a small change to a
+        parameter can flip a binary variable from 0 to 1, producing a completely different
+        solution structure. The "allowable range" concept doesn't translate directly.</p>
+        <p>When your model has integer or binary variables, <strong>scenario analysis</strong>
+        is usually more informative than classical sensitivity: solve the model under several
+        realistic parameter variations and compare the solution structures directly. If the
+        same facilities open and the same routes are chosen across all scenarios, the
+        solution is robust. If not, the discrete choices are sensitive to your inputs.</p>
+      `,
+    },
+    {
+      type: "go_deeper",
       title: "Robust optimization and stochastic programming",
       content: `
         <p>When sensitivity analysis reveals that your solution is fragile, there are

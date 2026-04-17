@@ -40,9 +40,13 @@ export const lesson3: Lesson = {
         <p><code>ship_from_warehouse1 <= M * is_warehouse1_open</code></p>
         <p>If <code>is_warehouse1_open = 0</code>, then <code>ship ≤ 0</code> (can't ship).
         If <code>is_warehouse1_open = 1</code>, then <code>ship ≤ M</code> (effectively unconstrained).</p>
-        <p>The danger: if M is too large (e.g., 999999), the LP relaxation becomes very weak
-        and the solver takes much longer. <strong>Always make M as small as possible</strong> -
-        use the tightest valid upper bound.</p>
+        <p>The danger: if M is too large (e.g., 999999), the solver takes much longer.
+        The reason comes down to something called the <strong>LP relaxation</strong>: the
+        solver first solves a version of the problem where integer requirements are dropped
+        (so <code>is_warehouse1_open</code> can be 0.3 instead of 0 or 1). A tight M keeps
+        this relaxation close to the true integer solution, giving the solver better guidance.
+        A huge M makes the relaxation nearly useless. We'll cover this in detail in Chapter 6.</p>
+        <p><strong>Always make M as small as possible.</strong> Use the tightest valid upper bound.</p>
       `,
     },
     {
@@ -54,10 +58,10 @@ export const lesson3: Lesson = {
         "10000 (10x the capacity for safety margin)",
       ],
       correct_index: 1,
-      explanation: `M should be exactly 1000 - the tightest valid bound. Using 999999 is technically correct
-        but makes the LP relaxation almost useless, causing the solver to explore far more branches.
-        A tight M = 1000 means the LP relaxation closely approximates the integer problem, giving
-        the solver much better bounds and faster convergence.`,
+      explanation: `M should be exactly 1000, the tightest valid bound. Using 999999 is technically correct
+        but makes the relaxed problem almost useless for guiding the search, causing the solver to
+        explore far more branches. A tight M = 1000 keeps the relaxation close to the true integer
+        solution, giving the solver much better bounds and faster convergence.`,
     },
     {
       type: "prose",

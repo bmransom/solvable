@@ -56,9 +56,9 @@ export const lesson4: Lesson = {
         tolerance. But if your code checks <code>if (x > 0) { ship_order(); }</code>,
         you'll ship an order for 0.000000000037 units.</p>
         <p><strong>Fix</strong>: apply a rounding threshold before acting on solver output.
-        For integer/binary variables, round to the nearest integer. For continuous
-        variables, apply a threshold appropriate to your domain (e.g., quantities below
-        0.01 units are treated as zero).</p>
+        For continuous variables, apply a threshold appropriate to your domain (e.g.,
+        quantities below 0.01 units are treated as zero). When working with integer
+        variables (covered in Chapter 6), round to the nearest integer.</p>
       `,
     },
     {
@@ -76,18 +76,17 @@ export const lesson4: Lesson = {
     },
     {
       type: "prediction",
-      question: "Your MIP solver returns a binary variable with value 0.9999999. What should you do?",
+      question: "Your solver returns a variable with value 3.7e-11 that you expected to be zero. What should you do?",
       options: [
         "Report a solver bug",
-        "Round to 1 - it's within floating-point tolerance of an integer",
-        "Tighten the solver's tolerance settings until it returns exactly 1",
+        "Treat it as zero. Apply a rounding threshold before acting on solver output.",
+        "Tighten the solver's tolerance settings until it returns exactly 0",
       ],
       correct_index: 1,
-      explanation: `This is normal floating-point behavior. The solver considers this "integer" because
-        it's within its integrality tolerance (typically 10<sup>-5</sup>). Round binary/integer
-        variables to the nearest integer before using them in your application logic. Tightening
-        tolerances can make the solver slower and may not help - floating-point arithmetic is
-        inherently approximate.`,
+      explanation: `This is normal floating-point behavior. The solver considers this "zero" because
+        it's within its feasibility tolerance (typically 10<sup>-6</sup>). Always apply rounding
+        thresholds before acting on solver output. Tightening tolerances can make the solver slower
+        and may not help. Floating-point arithmetic is inherently approximate.`,
     },
     {
       type: "go_deeper",
