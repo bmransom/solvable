@@ -64,6 +64,7 @@
   }
 
   const is_sandbox = $derived(current_chapter?.is_sandbox === true);
+  let sidebar_open = $state(false);
 
   function handle_select_lesson(chapter_id: string, lesson_id: string) {
     navigate_to(chapter_id, lesson_id);
@@ -130,13 +131,24 @@
   <LandingPage on_start={handle_start_tutorial} />
 {:else}
 <div class="app">
-  <ChapterSidebar
-    chapters={CHAPTERS}
-    current_chapter_id={progress_state.current_chapter}
-    {progress_state}
-    on_select_chapter={handle_select_chapter}
-    on_select_lesson={handle_select_lesson}
-  />
+  <button class="mobile-menu-button" onclick={() => sidebar_open = !sidebar_open} aria-label="Toggle menu">
+    {sidebar_open ? "✕" : "☰"}
+  </button>
+
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  {#if sidebar_open}
+    <div class="sidebar-overlay" onclick={() => sidebar_open = false}></div>
+  {/if}
+
+  <div class="sidebar-wrapper" class:sidebar-open={sidebar_open}>
+    <ChapterSidebar
+      chapters={CHAPTERS}
+      current_chapter_id={progress_state.current_chapter}
+      {progress_state}
+      on_select_chapter={(id) => { handle_select_chapter(id); sidebar_open = false; }}
+      on_select_lesson={(cid, lid) => { handle_select_lesson(cid, lid); sidebar_open = false; }}
+    />
+  </div>
 
   <main class="lesson-main" class:sandbox-main={is_sandbox}>
     {#if is_sandbox}
@@ -251,17 +263,57 @@
     font-size: 1.1rem;
   }
 
+  .mobile-menu-button {
+    display: none;
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+    background: #1a1d2e;
+    border: 1px solid #2a2d3a;
+    border-radius: 8px;
+    color: #e1e4eb;
+    font-size: 1.2rem;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-overlay {
+    display: none;
+  }
+
   @media (max-width: 768px) {
-    .app {
-      flex-direction: column;
+    .mobile-menu-button {
+      display: flex;
     }
 
-    .app :global(.chapter-sidebar) {
-      width: 100%;
-      height: auto;
-      max-height: 40vh;
-      border-right: none;
-      border-bottom: 1px solid #2a2d3a;
+    .sidebar-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      height: 100vh;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+    }
+
+    .sidebar-wrapper.sidebar-open {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .lesson-main {
+      padding-top: 3.5rem;
     }
   }
 </style>

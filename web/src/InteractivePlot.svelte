@@ -164,6 +164,31 @@
     dragging_constraint_index = null;
   }
 
+  // Touch event handlers for mobile
+  function get_touch_coords(event: TouchEvent): { clientX: number; clientY: number } {
+    const touch = event.touches[0] || event.changedTouches[0];
+    return { clientX: touch.clientX, clientY: touch.clientY };
+  }
+
+  function handle_plot_touchstart(event: TouchEvent) {
+    if (!allow_drag_point && !allow_drag_constraints) return;
+    event.preventDefault();
+    const coords = get_touch_coords(event);
+    handle_plot_mousedown(coords as MouseEvent);
+  }
+
+  function handle_plot_touchmove(event: TouchEvent) {
+    if (!is_dragging_explorer && dragging_constraint_index === null) return;
+    event.preventDefault();
+    const coords = get_touch_coords(event);
+    handle_plot_mousemove(coords as MouseEvent);
+  }
+
+  function handle_plot_touchend(event: TouchEvent) {
+    event.preventDefault();
+    handle_plot_mouseup();
+  }
+
   // Constraint toggle
   function toggle_constraint(index: number) {
     model.constraints[index].enabled = !model.constraints[index].enabled;
@@ -260,6 +285,9 @@
     onmousemove={handle_plot_mousemove}
     onmouseup={handle_plot_mouseup}
     onmouseleave={handle_plot_mouseup}
+    ontouchstart={handle_plot_touchstart}
+    ontouchmove={handle_plot_touchmove}
+    ontouchend={handle_plot_touchend}
     style="cursor: {allow_drag_point ? 'crosshair' : 'default'}"
   >
     <!-- Grid lines -->

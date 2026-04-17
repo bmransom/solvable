@@ -69,4 +69,14 @@
   .block-wrapper {
     /* Interactive blocks can break out wider */
   }
+
+  @media (max-width: 768px) {
+    .lesson-view {
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    .lesson-title {
+      font-size: 1.3rem;
+    }
+  }
 </style>
