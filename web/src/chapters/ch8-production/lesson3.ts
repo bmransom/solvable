@@ -100,6 +100,34 @@ export const lesson3: Lesson = {
         the operational cadence.`,
     },
     {
+      type: "go_deeper",
+      title: "When the LP is very large",
+      content: `
+        <p>The examples in this tutorial have a handful of variables. Production planning
+        models (supply chain, logistics, energy) can have millions of variables and
+        constraints spanning weeks or months of decisions linked together over time.</p>
+        <p>At this scale, the failure modes are different from small models:</p>
+        <ul>
+          <li><strong>Numerical conditioning</strong>: with millions of coefficients spanning
+          many orders of magnitude, the solver's floating-point arithmetic accumulates
+          errors. Watch for solver warnings about large matrix coefficients or ill-conditioned
+          bases. These are early signs that results may be unreliable.</li>
+          <li><strong>Memory</strong>: the constraint matrix, basis factorization, and solution
+          vectors all consume memory. A model that solves fine in staging can OOM in production
+          if the instance is larger than expected. Monitor memory alongside solve time.</li>
+          <li><strong>Presolve sensitivity</strong>: for large models, the presolve step
+          (where the solver simplifies the model before solving) can dramatically affect
+          performance. A model that presolves well might solve in 30 seconds; the same
+          model with slightly different data that doesn't presolve as effectively might
+          take 30 minutes. If solve times are volatile, check whether presolve reductions
+          are consistent across runs.</li>
+        </ul>
+        <p>These issues are specific to large-scale LP. MIP has its own scaling challenges
+        (exponential branching), but large LP scaling is about numerical stability and
+        memory, not combinatorics.</p>
+      `,
+    },
+    {
       type: "checkpoint",
       message: "You know how to monitor an optimization system in production: track solve time, gap, objective trend, and constraint slack. And you know how to build stakeholder trust incrementally.",
     },

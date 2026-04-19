@@ -30,18 +30,20 @@ export const lesson5: Lesson = {
       type: "prose",
       content: `
         <h3>Commercial solvers</h3>
-        <p><strong>Gurobi</strong> and <strong>CPLEX</strong> (IBM) are the industry leaders.
-        They're typically 10-100x faster than open-source solvers on hard MIP problems.
-        The speed difference comes from decades of engineering: better heuristics, tighter
-        cuts, smarter branching, and extensive numerical tuning.</p>
+        <p><strong>Gurobi</strong>, <strong>CPLEX</strong> (IBM), and <strong>FICO Xpress</strong>
+        are the three major commercial solvers. They're typically 10-100x faster than
+        open-source solvers on hard MIP problems. The speed difference comes from decades
+        of engineering: better heuristics, tighter cuts, smarter branching, and extensive
+        numerical tuning.</p>
         <ul>
           <li><strong>Gurobi</strong>: widely considered the fastest. Excellent Python API.
           Free for academics. Commercial licenses are expensive (tens of thousands per year)
           but the cost is usually justified if optimization is core to your business.</li>
+          <li><strong>FICO Xpress</strong>: strong LP and MIP performance, with its own
+          modeling language (Mosel). Widely used in supply chain planning, logistics, and
+          financial services.</li>
           <li><strong>CPLEX</strong>: IBM's solver. Comparable performance to Gurobi. Often
           bundled with IBM's Decision Optimization suite. Strong in enterprise environments.</li>
-          <li><strong>FICO Xpress</strong>: third major commercial solver. Strong modeling
-          language (Mosel). Common in financial services.</li>
         </ul>
         <p>For pure LP (no integers), the speed gap between commercial and open-source
         is smaller. For hard MIPs, it can be the difference between solving in 10 seconds
