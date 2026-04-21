@@ -69,20 +69,21 @@ End`,
       type: "reveal",
       label: "Show transportation LP formulation",
       content: `Minimize
-  cost: 4 x11 + 8 x12 + 1 x13 + 7 x21 + 3 x22 + 5 x23
+  cost: 4 ship_w1_s1 + 8 ship_w1_s2 + 1 ship_w1_s3
+     + 7 ship_w2_s1 + 3 ship_w2_s2 + 5 ship_w2_s3
 Subject To
-  supply1: x11 + x12 + x13 <= 300
-  supply2: x21 + x22 + x23 <= 500
-  demand1: x11 + x21 >= 200
-  demand2: x12 + x22 >= 250
-  demand3: x13 + x23 >= 150
+  supply_w1: ship_w1_s1 + ship_w1_s2 + ship_w1_s3 <= 300
+  supply_w2: ship_w2_s1 + ship_w2_s2 + ship_w2_s3 <= 500
+  demand_s1: ship_w1_s1 + ship_w2_s1 >= 200
+  demand_s2: ship_w1_s2 + ship_w2_s2 >= 250
+  demand_s3: ship_w1_s3 + ship_w2_s3 >= 150
 Bounds
-  0 <= x11
-  0 <= x12
-  0 <= x13
-  0 <= x21
-  0 <= x22
-  0 <= x23
+  0 <= ship_w1_s1
+  0 <= ship_w1_s2
+  0 <= ship_w1_s3
+  0 <= ship_w2_s1
+  0 <= ship_w2_s2
+  0 <= ship_w2_s3
 End`,
     },
     {

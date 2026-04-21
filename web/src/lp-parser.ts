@@ -104,14 +104,34 @@ function lex(input: string): { tokens: Token[]; errors: ParseError[] } {
 
     if (character === "<") {
       advance();
-      if (peek() === "=") advance();
+      if (peek() === "=") {
+        advance();
+      } else {
+        errors.push({
+          line: token_line,
+          column: token_column,
+          message: "Use '<=' instead of '<'",
+          severity: "Error",
+          hint: "LP solvers only support <=, >=, and =. Strict inequalities aren't allowed because the solver needs a closed feasible region.",
+        });
+      }
       push({ type: "less_equal" }, token_line, token_column);
       continue;
     }
 
     if (character === ">") {
       advance();
-      if (peek() === "=") advance();
+      if (peek() === "=") {
+        advance();
+      } else {
+        errors.push({
+          line: token_line,
+          column: token_column,
+          message: "Use '>=' instead of '>'",
+          severity: "Error",
+          hint: "LP solvers only support <=, >=, and =. Strict inequalities aren't allowed because the solver needs a closed feasible region.",
+        });
+      }
       push({ type: "greater_equal" }, token_line, token_column);
       continue;
     }
@@ -185,6 +205,19 @@ function lex(input: string): { tokens: Token[]; errors: ParseError[] } {
       }
 
       push({ type: "identifier", name: word }, token_line, token_column);
+      continue;
+    }
+
+    // Multiplication sign — common mistake
+    if (character === "*") {
+      advance();
+      errors.push({
+        line: token_line,
+        column: token_column,
+        message: "Unexpected '*'",
+        severity: "Error",
+        hint: "In LP format, multiplication is implicit — write '5 x' not '5 * x'.",
+      });
       continue;
     }
 
@@ -532,16 +565,45 @@ function parse_tokens(tokens: Token[]): { model: ParsedModel | null; errors: Par
     };
   });
 
-  // Validation warnings
-  const referenced_in_expressions = new Set<string>();
-  for (const term of objective.terms) referenced_in_expressions.add(term.variable_name);
-  for (const constraint of constraints) {
-    for (const term of constraint.expression.terms) referenced_in_expressions.add(term.variable_name);
+  // Check for missing End statement
+  const last_token = tokens[tokens.length - 1];
+  const had_end_section = tokens.some((t) => t.kind.type === "section" && t.kind.section === "End");
+  if (!had_end_section) {
+    errors.push({
+      line: last_token?.line ?? 0,
+      column: last_token?.column ?? 0,
+      message: "Missing 'End' statement",
+      severity: "Warning",
+      hint: "Add 'End' on the last line — solvers use it to know where the model stops.",
+    });
   }
+
+  // Validation warnings
+  const referenced_in_objective = new Set<string>();
+  const referenced_in_constraints = new Set<string>();
+  for (const term of objective.terms) referenced_in_objective.add(term.variable_name);
+  for (const constraint of constraints) {
+    for (const term of constraint.expression.terms) referenced_in_constraints.add(term.variable_name);
+  }
+
+  const referenced_in_expressions = new Set([...referenced_in_objective, ...referenced_in_constraints]);
 
   for (const variable of variables) {
     if (!referenced_in_expressions.has(variable.name)) {
       errors.push({ line: 0, column: 0, message: `Variable '${variable.name}' is declared but never used in the objective or any constraint.`, severity: "Warning" });
+    }
+  }
+
+  // Variables in constraints but not in objective
+  for (const name of referenced_in_constraints) {
+    if (!referenced_in_objective.has(name)) {
+      errors.push({
+        line: 0,
+        column: 0,
+        message: `Variable '${name}' appears in constraints but not in the objective.`,
+        severity: "Warning",
+        hint: `Is '${name}' missing from the objective, or is it a slack/auxiliary variable?`,
+      });
     }
   }
 

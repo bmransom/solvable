@@ -1,14 +1,78 @@
 <script lang="ts">
   import type { SolveResult, ParseResult, SolverState } from "./types";
+  import { push_route } from "./router";
+
+  interface FilterStep {
+    label: string;
+    highlight_variables: string[];
+    highlight_constraints: string[];
+    annotation?: string;
+  }
 
   interface Props {
     solve_result: SolveResult | null;
     parse_result: ParseResult | null;
     solve_error: string | null;
     solver_state: SolverState;
+    highlight_variables?: string[];
+    highlight_constraints?: string[];
+    filter_steps?: FilterStep[];
   }
 
-  let { solve_result, parse_result, solve_error, solver_state }: Props = $props();
+  let {
+    solve_result,
+    parse_result,
+    solve_error,
+    solver_state,
+    highlight_variables,
+    highlight_constraints,
+    filter_steps,
+  }: Props = $props();
+
+  // Filter step state
+  let current_filter_step = $state(0);
+
+  const active_highlights = $derived.by(() => {
+    if (filter_steps && filter_steps.length > 0 && current_filter_step > 0) {
+      const step = filter_steps[current_filter_step - 1];
+      return {
+        variables: new Set(step.highlight_variables),
+        constraints: new Set(step.highlight_constraints),
+        annotation: step.annotation,
+      };
+    }
+    if (highlight_variables || highlight_constraints) {
+      return {
+        variables: new Set(highlight_variables ?? []),
+        constraints: new Set(highlight_constraints ?? []),
+        annotation: undefined,
+      };
+    }
+    return null;
+  });
+
+  const has_filtering = $derived(!!active_highlights);
+
+  function is_variable_highlighted(name: string): boolean {
+    if (!active_highlights) return true;
+    return active_highlights.variables.has(name);
+  }
+
+  function is_constraint_highlighted(name: string): boolean {
+    if (!active_highlights) return true;
+    return active_highlights.constraints.has(name);
+  }
+
+  // Status-to-lesson cross-links
+  const STATUS_LESSON_MAP: Record<string, { chapter: string; lesson: string; label: string }> = {
+    "Infeasible": { chapter: "ch6-when-things-go-wrong", lesson: "infeasible", label: "Why is my model infeasible?" },
+    "Unbounded": { chapter: "ch6-when-things-go-wrong", lesson: "unbounded", label: "What does unbounded mean?" },
+    "TimeLimit": { chapter: "ch8-running-in-production", lesson: "time-limits-and-fallbacks", label: "Handling time limits" },
+  };
+
+  function navigate_to_lesson(chapter: string, lesson: string) {
+    push_route({ view: "lesson", chapter_id: chapter, lesson_id: lesson });
+  }
 
   const status_class = $derived.by(() => {
     if (!solve_result) return "";
@@ -100,6 +164,27 @@
         <span class="objective-value">{solve_result.objective_value}</span>
       </div>
 
+      {#if filter_steps && filter_steps.length > 0}
+        <div class="filter-controls">
+          <div class="filter-step-label">
+            {current_filter_step === 0 ? "Full output" : filter_steps[current_filter_step - 1].label}
+          </div>
+          <div class="filter-buttons">
+            {#if current_filter_step > 0}
+              <button class="filter-button" onclick={() => current_filter_step--}>Back</button>
+            {/if}
+            {#if current_filter_step < filter_steps.length}
+              <button class="filter-button filter-button-primary" onclick={() => current_filter_step++}>
+                {current_filter_step === 0 ? "Start filtering" : "Next"}
+              </button>
+            {/if}
+          </div>
+          {#if active_highlights?.annotation}
+            <p class="filter-annotation">{active_highlights.annotation}</p>
+          {/if}
+        </div>
+      {/if}
+
       <div class="section">
         <h3 class="section-title">Variables</h3>
         <table class="results-table">
@@ -115,7 +200,7 @@
           </thead>
           <tbody>
             {#each sorted_variables as variable}
-              <tr>
+              <tr class:dimmed={has_filtering && !is_variable_highlighted(variable.name)} class:highlighted={has_filtering && is_variable_highlighted(variable.name)}>
                 <td class="variable-name">{variable.name}</td>
                 <td class="numeric">{formatNumber(variable.primal)}</td>
                 {#if has_dual_info}
@@ -145,7 +230,7 @@
             <tbody>
               {#each sorted_constraints as constraint}
                 {@const slack = computeSlack(constraint)}
-                <tr class:non-binding={has_dual_info && Math.abs(slack) > 1e-8}>
+                <tr class:non-binding={has_dual_info && Math.abs(slack) > 1e-8 && !has_filtering} class:dimmed={has_filtering && !is_constraint_highlighted(constraint.name)} class:highlighted={has_filtering && is_constraint_highlighted(constraint.name)}>
                   <td class="variable-name">{constraint.name}</td>
                   <td class="numeric">{formatNumber(constraint.primal)}</td>
                   {#if has_dual_info}
@@ -162,11 +247,21 @@
       <div class="status-message">
         <p>This model has no feasible solution. The constraints are contradictory — no variable values can satisfy all of them simultaneously.</p>
         <p class="hint">Try relaxing a constraint or checking for typos in the right-hand side values.</p>
+        {#if STATUS_LESSON_MAP["Infeasible"]}
+          <button class="lesson-link" onclick={() => navigate_to_lesson(STATUS_LESSON_MAP["Infeasible"].chapter, STATUS_LESSON_MAP["Infeasible"].lesson)}>
+            {STATUS_LESSON_MAP["Infeasible"].label} →
+          </button>
+        {/if}
       </div>
     {:else if solve_result.status === "Unbounded"}
       <div class="status-message">
         <p>The objective can improve without limit. There is no finite optimal solution.</p>
         <p class="hint">This usually means a constraint is missing. Check that all variables have appropriate upper bounds.</p>
+        {#if STATUS_LESSON_MAP["Unbounded"]}
+          <button class="lesson-link" onclick={() => navigate_to_lesson(STATUS_LESSON_MAP["Unbounded"].chapter, STATUS_LESSON_MAP["Unbounded"].lesson)}>
+            {STATUS_LESSON_MAP["Unbounded"].label} →
+          </button>
+        {/if}
       </div>
     {:else if solve_result.status === "Error"}
       <div class="status-message error">
@@ -446,5 +541,88 @@
     margin-top: 0.5rem;
     color: #6b7084;
     font-size: 0.85rem;
+  }
+
+  .dimmed {
+    opacity: 0.3;
+  }
+
+  .highlighted {
+    border-left: 3px solid #4c6ef5;
+  }
+
+  .highlighted td:first-child {
+    padding-left: calc(0.6rem - 3px);
+  }
+
+  .filter-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #1a1d2e;
+    border-radius: 8px;
+    border: 1px solid #2a2d3a;
+  }
+
+  .filter-step-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #abb2bf;
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .filter-button {
+    padding: 0.3rem 0.75rem;
+    background: transparent;
+    color: #abb2bf;
+    border: 1px solid #2a2d3a;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .filter-button:hover {
+    border-color: #4c6ef5;
+    color: #e1e4eb;
+  }
+
+  .filter-button-primary {
+    background: #4c6ef5;
+    border-color: #4c6ef5;
+    color: white;
+  }
+
+  .filter-button-primary:hover {
+    background: #5c7cfa;
+  }
+
+  .filter-annotation {
+    font-size: 0.8rem;
+    color: #6b7084;
+    line-height: 1.4;
+    border-top: 1px solid #2a2d3a;
+    padding-top: 0.5rem;
+  }
+
+  .lesson-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    background: none;
+    border: 1px solid #4c6ef5;
+    color: #4c6ef5;
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .lesson-link:hover {
+    background: rgba(76, 110, 245, 0.1);
   }
 </style>

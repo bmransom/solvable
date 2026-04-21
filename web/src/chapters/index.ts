@@ -3,24 +3,22 @@ import { chapter1 } from "./ch1-what-is-optimization";
 import { chapter2 } from "./ch2-constraints";
 import { chapter3 } from "./ch3-how-solver-works";
 import { chapter4 } from "./ch4-formulation-patterns";
-import { chapter5 } from "./ch5-when-things-go-wrong";
-import { chapter6 } from "./ch6-integer-programming";
-import { chapter7 } from "./ch7-sensitivity";
-import { chapter8 } from "./ch8-production";
-import { chapter9 } from "./ch9-decision-systems";
+import { chapter5_ip } from "./ch5-integer-programming";
+import { chapter6_failure } from "./ch6-when-things-go-wrong";
+import { chapter7 } from "./ch7-reading-the-plan";
+import { chapter8 } from "./ch8-running-in-production";
 
 export const CHAPTERS: Chapter[] = [
   chapter1,
   chapter2,
   chapter3,
   chapter4,
-  chapter5,
-  chapter6,
+  chapter5_ip,
+  chapter6_failure,
   chapter7,
   chapter8,
-  chapter9,
   {
-    id: "ch10-sandbox",
+    id: "sandbox",
     title: "Sandbox",
     description: "Free-form LP editor - build and solve anything",
     lessons: [],

@@ -67,6 +67,7 @@ export const lesson1: Lesson = {
         show_vertex_labels: true,
         highlight_optimal: true,
         show_integer_lattice: true,
+        allow_toggle_integer: true,
       },
     },
     {

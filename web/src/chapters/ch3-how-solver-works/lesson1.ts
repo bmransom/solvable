@@ -17,8 +17,18 @@ export const lesson1: Lesson = {
       `,
     },
     {
+      type: "prose",
+      content: `
+        <p>The solver starts at a vertex (the origin below) and looks at its neighbors.
+        <span style="color: #51cf66">Green arrows</span> show directions that improve the
+        objective, with the gain shown. <span style="color: #fa5252">Red arrows</span> make
+        it worse. Click <strong>Step</strong> to move to the best neighbor. When all arrows
+        are red, the solver is at the optimum.</p>
+      `,
+    },
+    {
       type: "interactive",
-      component: "InteractivePlot",
+      component: "VertexWalker",
       props: {
         model: {
           variables: ["x", "y"] as [string, string],
@@ -30,27 +40,14 @@ export const lesson1: Lesson = {
             { name: "c4", coefficients: [2, 1] as [number, number], operator: "<=" as const, rhs: 12, enabled: true, color: "#be4bdb" },
           ],
         },
-        allow_drag_constraints: false,
-        allow_drag_objective: false,
-        allow_drag_point: true,
-        allow_toggle_constraints: false,
-        show_objective_contour: true,
-        show_gradient_arrow: true,
-        show_vertex_labels: true,
-        highlight_optimal: true,
       },
     },
     {
       type: "prose",
       content: `
-        <p>The plot above has more vertices than our factory problem. Drag the explorer
-        point to each vertex and note its objective value.</p>
-        <p>Now imagine starting at the origin (0, 0). The solver looks at the two edges
-        leaving that vertex: one goes along the x-axis, the other along the y-axis.
-        Which direction improves <code>3x + 5y</code> faster? The y-direction (coefficient 5
-        is larger). So the solver walks up the y-axis to the next vertex.</p>
-        <p>At each vertex, it repeats: "Which neighboring vertex is best?" When no neighbor
-        is better, it stops. At that point, it's guaranteed to be at the global optimum.</p>
+        <p>Each number on an arrow is the objective change if the solver moves in that
+        direction. The solver always picks the best improving direction. When no arrow is
+        green, every neighbor is worse or equal, and the solver stops.</p>
       `,
     },
     {

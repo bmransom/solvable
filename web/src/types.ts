@@ -3,6 +3,7 @@ export interface ParseError {
   column: number;
   message: string;
   severity: "Error" | "Warning";
+  hint?: string;
 }
 
 export interface ModelSummary {

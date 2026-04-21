@@ -101,11 +101,14 @@
         const line_info = editor_view.state.doc.line(
           Math.min(error.line, editor_view.state.doc.lines)
         );
+        const message = error.hint
+          ? `${error.message}\n${error.hint}`
+          : error.message;
         return {
           from: line_info.from,
           to: line_info.to,
           severity: error.severity === "Error" ? "error" as const : "warning" as const,
-          message: error.message,
+          message,
         };
       });
 

@@ -4,7 +4,8 @@ export type LessonBlock =
   | RevealBlock
   | GoDeeperBlock
   | PredictionBlock
-  | CheckpointBlock;
+  | CheckpointBlock
+  | SandboxLinkBlock;
 
 export interface ProseBlock {
   type: "prose";
@@ -40,6 +41,12 @@ export interface PredictionBlock {
 export interface CheckpointBlock {
   type: "checkpoint";
   message: string;
+}
+
+export interface SandboxLinkBlock {
+  type: "sandbox_link";
+  label: string;
+  lp_text: string;
 }
 
 export interface Lesson {

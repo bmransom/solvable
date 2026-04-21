@@ -29,6 +29,7 @@ export interface PlotGeometry {
   optimal_value: number | null;
   is_infeasible: boolean;
   is_unbounded: boolean;
+  unbounded_directions: Point[];
 }
 
 export interface ConstraintLineData {
@@ -98,8 +99,18 @@ export function compute_geometry(
   // Compute viewport
   const viewport = compute_viewport(unique_vertices, solution);
 
+  // Detect unboundedness: check if a test point far along any ray from origin
+  // into the first quadrant is feasible (indicating the region extends to infinity)
+  const unbounded_info = detect_unboundedness(lines, viewport);
+
   // Compute feasible polygon by ordering vertices by angle from centroid
-  const feasible_polygon = compute_feasible_polygon(unique_vertices);
+  let feasible_polygon: Point[];
+  if (unbounded_info.is_unbounded) {
+    // Clip the unbounded region to the viewport
+    feasible_polygon = compute_clipped_unbounded_polygon(unique_vertices, lines, viewport);
+  } else {
+    feasible_polygon = compute_feasible_polygon(unique_vertices);
+  }
 
   // Compute constraint line endpoints (clipped to viewport)
   const constraint_lines = compute_constraint_lines(model, viewport);
@@ -107,11 +118,15 @@ export function compute_geometry(
   // Find optimal point
   let optimal_point: Point | null = null;
   let optimal_value: number | null = null;
-  if (solution) {
+  const is_objective_unbounded = unbounded_info.is_unbounded && check_objective_unbounded(model, lines);
+  if (is_objective_unbounded) {
+    // Objective is unbounded — no finite optimal
+    optimal_point = null;
+    optimal_value = null;
+  } else if (solution) {
     optimal_point = { x: solution.x, y: solution.y };
     optimal_value = solution.objective;
   } else if (unique_vertices.length > 0) {
-    // Find the best vertex ourselves
     const is_max = model.objective.sense === "max";
     let best = unique_vertices[0];
     for (const vertex of unique_vertices) {
@@ -130,8 +145,128 @@ export function compute_geometry(
     vertices: unique_vertices,
     optimal_point,
     optimal_value,
-    is_infeasible: unique_vertices.length === 0,
-    is_unbounded: false,
+    is_infeasible: unique_vertices.length === 0 && !unbounded_info.is_unbounded,
+    is_unbounded: unbounded_info.is_unbounded,
+    unbounded_directions: unbounded_info.directions,
+  };
+}
+
+function detect_unboundedness(
+  lines: Line[],
+  viewport: Viewport,
+): { is_unbounded: boolean; directions: Point[] } {
+  // Test points at the viewport corners — if any are feasible,
+  // the region extends to the viewport boundary (and beyond)
+  const test_points: Point[] = [
+    { x: viewport.x_max, y: viewport.y_max },
+    { x: viewport.x_max, y: 0 },
+    { x: 0, y: viewport.y_max },
+  ];
+
+  const directions: Point[] = [];
+  for (const point of test_points) {
+    if (is_feasible(point, lines)) {
+      // Normalize direction from origin
+      const magnitude = Math.sqrt(point.x * point.x + point.y * point.y);
+      if (magnitude > EPSILON) {
+        directions.push({ x: point.x / magnitude, y: point.y / magnitude });
+      }
+    }
+  }
+
+  // Also check if any feasible ray extends to infinity by testing
+  // a point far beyond the viewport along each unbounded direction
+  const far_scale = Math.max(viewport.x_max, viewport.y_max) * 10;
+  const confirmed_directions: Point[] = [];
+  for (const dir of directions) {
+    const far_point = { x: dir.x * far_scale, y: dir.y * far_scale };
+    if (is_feasible(far_point, lines)) {
+      confirmed_directions.push(dir);
+    }
+  }
+
+  return {
+    is_unbounded: confirmed_directions.length > 0,
+    directions: confirmed_directions,
+  };
+}
+
+function check_objective_unbounded(model: PlotModel, lines: Line[]): boolean {
+  // Check if objective can improve indefinitely within the feasible region
+  const [a, b] = model.objective.coefficients;
+  const is_max = model.objective.sense === "max";
+  const scale = 1e6;
+  // Test a point far in the objective improvement direction
+  const test = {
+    x: is_max ? (a > 0 ? scale : 0) : (a < 0 ? scale : 0),
+    y: is_max ? (b > 0 ? scale : 0) : (b < 0 ? scale : 0),
+  };
+  return is_feasible(test, lines);
+}
+
+function compute_clipped_unbounded_polygon(
+  vertices: VertexData[],
+  lines: Line[],
+  viewport: Viewport,
+): Point[] {
+  // Start with the viewport rectangle as a polygon
+  let polygon: Point[] = [
+    { x: viewport.x_min, y: viewport.y_min },
+    { x: viewport.x_max, y: viewport.y_min },
+    { x: viewport.x_max, y: viewport.y_max },
+    { x: viewport.x_min, y: viewport.y_max },
+  ];
+
+  // Clip the viewport polygon by each constraint half-plane (Sutherland-Hodgman)
+  for (const line of lines) {
+    polygon = clip_polygon_by_halfplane(polygon, line);
+    if (polygon.length === 0) break;
+  }
+
+  return polygon;
+}
+
+function clip_polygon_by_halfplane(polygon: Point[], line: Line): Point[] {
+  if (polygon.length === 0) return [];
+
+  const result: Point[] = [];
+  for (let i = 0; i < polygon.length; i++) {
+    const current = polygon[i];
+    const next = polygon[(i + 1) % polygon.length];
+    const current_inside = point_in_halfplane(current, line);
+    const next_inside = point_in_halfplane(next, line);
+
+    if (current_inside) {
+      result.push(current);
+      if (!next_inside) {
+        const intersection = line_segment_intersection(current, next, line);
+        if (intersection) result.push(intersection);
+      }
+    } else if (next_inside) {
+      const intersection = line_segment_intersection(current, next, line);
+      if (intersection) result.push(intersection);
+    }
+  }
+
+  return result;
+}
+
+function point_in_halfplane(point: Point, line: Line): boolean {
+  const lhs = line.a * point.x + line.b * point.y;
+  if (line.operator === "<=") return lhs <= line.rhs + EPSILON;
+  if (line.operator === ">=") return lhs >= line.rhs - EPSILON;
+  return true; // equality constraints handled separately
+}
+
+function line_segment_intersection(p1: Point, p2: Point, line: Line): Point | null {
+  const lhs1 = line.a * p1.x + line.b * p1.y - line.rhs;
+  const lhs2 = line.a * p2.x + line.b * p2.y - line.rhs;
+  const denom = lhs1 - lhs2;
+  if (Math.abs(denom) < EPSILON) return null;
+  const t = lhs1 / denom;
+  return {
+    x: p1.x + t * (p2.x - p1.x),
+    y: p1.y + t * (p2.y - p1.y),
   };
 }
 

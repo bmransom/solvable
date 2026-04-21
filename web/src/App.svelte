@@ -7,40 +7,72 @@
   import { CHAPTERS, findChapter, findLesson } from "./chapters/index";
   import { progress, navigate_to, complete_lesson, type Progress } from "./progress";
   import { initializeParser } from "./parser";
+  import { get_current_route, push_route, type Route } from "./router";
   import type { Chapter, Lesson } from "./chapters/types";
 
   let progress_state: Progress = $state({
     completed_lessons: [],
     current_chapter: "ch1-what-is-optimization",
-    current_lesson: "your-first-optimization",
+    current_lesson: "maximize-profit",
+    prediction_responses: {},
   });
 
   let current_chapter: Chapter | undefined = $state(undefined);
   let current_lesson: Lesson | undefined = $state(undefined);
-  let show_landing = $state(true);
+  let current_view: "landing" | "lesson" | "sandbox" = $state("landing");
 
-  progress.subscribe((value) => {
-    progress_state = value;
-    if (value.completed_lessons.length > 0) {
-      show_landing = false;
-    }
-    const chapter = findChapter(value.current_chapter);
-
-    if (chapter?.is_sandbox) {
-      current_chapter = chapter;
+  function apply_route(route: Route) {
+    if (route.view === "landing") {
+      current_view = "landing";
+      current_chapter = undefined;
       current_lesson = undefined;
       return;
     }
 
-    const found = findLesson(value.current_chapter, value.current_lesson);
-    if (found) {
-      current_chapter = found.chapter;
-      current_lesson = found.lesson;
-    } else if (chapter && chapter.lessons.length > 0) {
-      current_chapter = chapter;
-      current_lesson = chapter.lessons[0];
-      navigate_to(chapter.id, chapter.lessons[0].id);
+    if (route.view === "sandbox") {
+      current_view = "sandbox";
+      const sandbox_chapter = CHAPTERS.find((ch) => ch.is_sandbox);
+      current_chapter = sandbox_chapter;
+      current_lesson = undefined;
+      if (sandbox_chapter) {
+        navigate_to(sandbox_chapter.id, "");
+      }
+      return;
     }
+
+    if (route.view === "lesson" && route.chapter_id && route.lesson_id) {
+      const found = findLesson(route.chapter_id, route.lesson_id);
+      if (found) {
+        current_view = "lesson";
+        current_chapter = found.chapter;
+        current_lesson = found.lesson;
+        navigate_to(found.chapter.id, found.lesson.id);
+        return;
+      }
+
+      // Try finding the chapter and defaulting to its first lesson
+      const chapter = findChapter(route.chapter_id);
+      if (chapter && chapter.lessons.length > 0) {
+        current_view = "lesson";
+        current_chapter = chapter;
+        current_lesson = chapter.lessons[0];
+        push_route({ view: "lesson", chapter_id: chapter.id, lesson_id: chapter.lessons[0].id });
+        navigate_to(chapter.id, chapter.lessons[0].id);
+        return;
+      }
+
+      // Invalid route — redirect to landing
+      push_route({ view: "landing" });
+      current_view = "landing";
+      return;
+    }
+
+    // Fallback
+    current_view = "landing";
+  }
+
+  progress.subscribe((value) => {
+    progress_state = value;
   });
 
   onMount(async () => {
@@ -49,52 +81,77 @@
     } catch (error) {
       console.error("Failed to initialize parser:", error);
     }
+
+    // Apply initial route from URL
+    const initial_route = get_current_route();
+    if (initial_route.view === "landing" && progress_state.completed_lessons.length > 0) {
+      // If URL is root but user has progress, resume from last position
+      const route: Route = {
+        view: "lesson",
+        chapter_id: progress_state.current_chapter,
+        lesson_id: progress_state.current_lesson,
+      };
+      push_route(route);
+      apply_route(route);
+    } else {
+      apply_route(initial_route);
+    }
+
+    // Listen for hash changes (browser back/forward)
+    window.addEventListener("hashchange", () => {
+      apply_route(get_current_route());
+    });
   });
+
+  function handle_navigate(chapter_id: string, lesson_id: string) {
+    const chapter = findChapter(chapter_id);
+    if (!chapter) return;
+
+    if (chapter.is_sandbox) {
+      push_route({ view: "sandbox" });
+    } else {
+      const target_lesson_id = lesson_id || (chapter.lessons.length > 0 ? chapter.lessons[0].id : "");
+      push_route({ view: "lesson", chapter_id, lesson_id: target_lesson_id });
+    }
+  }
 
   function handle_select_chapter(chapter_id: string) {
     const chapter = findChapter(chapter_id);
     if (!chapter) return;
     if (chapter.is_sandbox) {
-      current_chapter = chapter;
-      current_lesson = undefined;
-      navigate_to(chapter.id, "");
+      handle_navigate(chapter_id, "");
     } else if (chapter.lessons.length > 0) {
-      navigate_to(chapter.id, chapter.lessons[0].id);
+      handle_navigate(chapter_id, chapter.lessons[0].id);
     }
   }
 
-  const is_sandbox = $derived(current_chapter?.is_sandbox === true);
+  const is_sandbox = $derived(current_view === "sandbox");
   let sidebar_open = $state(false);
 
   function handle_select_lesson(chapter_id: string, lesson_id: string) {
-    navigate_to(chapter_id, lesson_id);
+    handle_navigate(chapter_id, lesson_id);
   }
 
   function handle_next_lesson() {
     if (!current_chapter || !current_lesson) return;
 
-    // Mark current lesson complete
     complete_lesson(current_chapter.id, current_lesson.id);
 
-    // Find next lesson
     const current_index = current_chapter.lessons.findIndex(
       (lesson) => lesson.id === current_lesson!.id
     );
 
     if (current_index < current_chapter.lessons.length - 1) {
-      // Next lesson in same chapter
       const next_lesson = current_chapter.lessons[current_index + 1];
-      navigate_to(current_chapter.id, next_lesson.id);
+      handle_navigate(current_chapter.id, next_lesson.id);
     } else {
-      // Find next chapter that has lessons
       const chapter_index = CHAPTERS.findIndex((ch) => ch.id === current_chapter!.id);
       for (let i = chapter_index + 1; i < CHAPTERS.length; i++) {
         if (CHAPTERS[i].lessons.length > 0) {
-          navigate_to(CHAPTERS[i].id, CHAPTERS[i].lessons[0].id);
+          handle_navigate(CHAPTERS[i].id, CHAPTERS[i].lessons[0].id);
           return;
         }
       }
-      // No more content — mark complete, show completion state
     }
   }
 
@@ -103,9 +160,7 @@
     const current_index = current_chapter.lessons.findIndex(
       (lesson) => lesson.id === current_lesson!.id
     );
-    // Next lesson in same chapter?
     if (current_index < current_chapter.lessons.length - 1) return true;
-    // Next chapter with lessons?
     const chapter_index = CHAPTERS.findIndex((ch) => ch.id === current_chapter!.id);
     for (let i = chapter_index + 1; i < CHAPTERS.length; i++) {
       if (CHAPTERS[i].lessons.length > 0) return true;
@@ -114,8 +169,8 @@
   });
 
   function handle_start_tutorial() {
-    show_landing = false;
-    navigate_to("ch1-what-is-optimization", "your-first-optimization");
+    const route: Route = { view: "lesson", chapter_id: "ch1-what-is-optimization", lesson_id: "maximize-profit" };
+    push_route(route);
   }
 
   const is_last_lesson_in_chapter = $derived.by(() => {
@@ -127,7 +182,7 @@
   });
 </script>
 
-{#if show_landing}
+{#if current_view === "landing"}
   <LandingPage on_start={handle_start_tutorial} />
 {:else}
 <div class="app">
@@ -155,7 +210,7 @@
       <SandboxView />
     {:else if current_lesson}
       {#key `${progress_state.current_chapter}/${progress_state.current_lesson}`}
-        <LessonView lesson={current_lesson} />
+        <LessonView lesson={current_lesson} chapter_id={current_chapter?.id} />
       {/key}
 
       <div class="lesson-footer">

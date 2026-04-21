@@ -6,13 +6,20 @@ export interface Progress {
   completed_lessons: string[];
   current_chapter: string;
   current_lesson: string;
+  prediction_responses: Record<string, number[]>;
 }
 
 function load_from_storage(): Progress {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      return {
+        completed_lessons: parsed.completed_lessons ?? [],
+        current_chapter: parsed.current_chapter ?? "ch1-what-is-optimization",
+        current_lesson: parsed.current_lesson ?? "maximize-profit",
+        prediction_responses: parsed.prediction_responses ?? {},
+      };
     }
   } catch {
     // Ignore parse errors
@@ -21,6 +28,7 @@ function load_from_storage(): Progress {
     completed_lessons: [],
     current_chapter: "ch1-what-is-optimization",
     current_lesson: "maximize-profit",
+    prediction_responses: {},
   };
 }
 
@@ -62,10 +70,37 @@ export function is_lesson_completed(progress_state: Progress, chapter_id: string
   return progress_state.completed_lessons.includes(`${chapter_id}/${lesson_id}`);
 }
 
+export function save_prediction(chapter_id: string, lesson_id: string, prediction_index: number) {
+  progress.update((current) => {
+    const key = `${chapter_id}/${lesson_id}`;
+    const existing = current.prediction_responses[key] ?? [];
+    return {
+      ...current,
+      prediction_responses: {
+        ...current.prediction_responses,
+        [key]: [...existing, prediction_index],
+      },
+    };
+  });
+}
+
+export function reset_lesson(chapter_id: string, lesson_id: string) {
+  progress.update((current) => {
+    const key = `${chapter_id}/${lesson_id}`;
+    const { [key]: _removed, ...remaining_predictions } = current.prediction_responses;
+    return {
+      ...current,
+      completed_lessons: current.completed_lessons.filter((k) => k !== key),
+      prediction_responses: remaining_predictions,
+    };
+  });
+}
+
 export function reset_progress() {
   progress.set({
     completed_lessons: [],
     current_chapter: "ch1-what-is-optimization",
     current_lesson: "maximize-profit",
+    prediction_responses: {},
   });
 }

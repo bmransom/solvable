@@ -22,6 +22,7 @@
     show_vertex_labels: boolean;
     highlight_optimal: boolean;
     show_integer_lattice?: boolean;
+    allow_toggle_integer?: boolean;
     sliders?: unknown[];
   }
 
@@ -36,7 +37,10 @@
     show_vertex_labels,
     highlight_optimal,
     show_integer_lattice = false,
+    allow_toggle_integer = false,
   }: Props = $props();
+
+  let integer_mode_active = $state(show_integer_lattice);
 
   // Mutable copy of the model for interactive manipulation
   // Use JSON round-trip instead of structuredClone because Svelte 5 $state proxies can't be cloned
@@ -61,15 +65,38 @@
   // Constraint dragging state
   let dragging_constraint_index: number | null = $state(null);
   let hovered_constraint_index: number | null = $state(null);
+  let drag_start_rhs: number | null = $state(null);
+  let drag_start_objective: number | null = $state(null);
+  let drag_tooltip_svg_x: number = $state(0);
+  let drag_tooltip_svg_y: number = $state(0);
 
-  // SVG dimensions
-  const SVG_WIDTH = 600;
-  const SVG_HEIGHT = 480;
+  // SVG dimensions — responsive with fixed aspect ratio
+  const BASE_WIDTH = 600;
+  const BASE_HEIGHT = 480;
+  const ASPECT_RATIO = BASE_WIDTH / BASE_HEIGHT;
   const MARGIN = { top: 20, right: 20, bottom: 40, left: 50 };
-  const PLOT_WIDTH = SVG_WIDTH - MARGIN.left - MARGIN.right;
-  const PLOT_HEIGHT = SVG_HEIGHT - MARGIN.top - MARGIN.bottom;
+
+  let container_element: HTMLDivElement;
+  let container_width = $state(BASE_WIDTH);
+
+  const SVG_WIDTH = $derived(Math.min(container_width, BASE_WIDTH));
+  const SVG_HEIGHT = $derived(SVG_WIDTH / ASPECT_RATIO);
+  const PLOT_WIDTH = $derived(SVG_WIDTH - MARGIN.left - MARGIN.right);
+  const PLOT_HEIGHT = $derived(SVG_HEIGHT - MARGIN.top - MARGIN.bottom);
+
+  // Touch target size increases on small viewports
+  const hit_target_width = $derived(container_width < 480 ? 20 : 14);
 
   let svg_element: SVGSVGElement;
+
+  $effect(() => {
+    if (!container_element) return;
+    const observer = new ResizeObserver((entries) => {
+      container_width = entries[0].contentRect.width;
+    });
+    observer.observe(container_element);
+    return () => observer.disconnect();
+  });
 
   // Recompute geometry when model changes
   $effect(() => {
@@ -123,6 +150,8 @@
     if (!allow_drag_constraints) return;
     event.stopPropagation();
     dragging_constraint_index = constraint_index;
+    drag_start_rhs = model.constraints[constraint_index].rhs;
+    drag_start_objective = geometry.optimal_value;
   }
 
   // Explorer point interactions
@@ -151,6 +180,8 @@
       const snapped_rhs = Math.round(new_rhs * 2) / 2;
       model.constraints[dragging_constraint_index].rhs = snapped_rhs;
       model = { ...model };
+      drag_tooltip_svg_x = svg_x;
+      drag_tooltip_svg_y = svg_y;
       return;
     }
 
@@ -162,6 +193,8 @@
   function handle_plot_mouseup() {
     is_dragging_explorer = false;
     dragging_constraint_index = null;
+    drag_start_rhs = null;
+    drag_start_objective = null;
   }
 
   // Touch event handlers for mobile
@@ -240,7 +273,7 @@
 
   // Integer lattice points within the viewport
   const integer_lattice_points = $derived.by(() => {
-    if (!show_integer_lattice) return [];
+    if (!integer_mode_active) return [];
     const viewport = geometry.viewport;
     const points: Array<{ x: number; y: number; feasible: boolean; objective: number }> = [];
     const x_start = Math.max(0, Math.ceil(viewport.x_min));
@@ -261,6 +294,21 @@
     return points;
   });
 
+  // Constraint drag tooltip info
+  const drag_tooltip_info = $derived.by(() => {
+    if (dragging_constraint_index === null || drag_start_rhs === null) return null;
+    const current_rhs = model.constraints[dragging_constraint_index].rhs;
+    const current_objective = geometry.optimal_value;
+    const objective_delta = current_objective !== null && drag_start_objective !== null
+      ? current_objective - drag_start_objective
+      : null;
+
+    // Check if constraint is non-binding (optimal point not on the line)
+    const is_non_binding = objective_delta !== null && Math.abs(objective_delta) < 1e-8 && Math.abs(current_rhs - drag_start_rhs) > 0.1;
+
+    return { current_rhs, objective_delta, is_non_binding };
+  });
+
   // Best integer feasible point
   const best_integer_point = $derived.by(() => {
     const feasible_points = integer_lattice_points.filter((p) => p.feasible);
@@ -273,7 +321,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="interactive-plot">
+<div class="interactive-plot" bind:this={container_element}>
   <svg
     bind:this={svg_element}
     role="img"
@@ -337,7 +385,7 @@
     {/if}
 
     <!-- Integer lattice points -->
-    {#if show_integer_lattice}
+    {#if integer_mode_active}
       {#each integer_lattice_points as point}
         <circle
           cx={to_svg_x(point.x)}
@@ -388,7 +436,7 @@
           x1={to_svg_x(line.start.x)} y1={to_svg_y(line.start.y)}
           x2={to_svg_x(line.end.x)} y2={to_svg_y(line.end.y)}
           stroke="transparent"
-          stroke-width="14"
+          stroke-width={hit_target_width}
           style="cursor: grab"
           onmousedown={(e) => handle_constraint_mousedown(e, line.constraint_index)}
           onmouseenter={() => (hovered_constraint_index = line.constraint_index)}
@@ -519,6 +567,38 @@
       {/if}
     {/if}
 
+    <!-- Unbounded indicator -->
+    {#if geometry.is_unbounded}
+      <text
+        x={MARGIN.left + PLOT_WIDTH / 2}
+        y={MARGIN.top + 24}
+        text-anchor="middle"
+        fill="#f76707"
+        font-size="14"
+        font-weight="600"
+      >Unbounded — region extends to infinity</text>
+      <!-- Directional arrows on viewport boundary -->
+      {#each geometry.unbounded_directions as dir}
+        {@const arrow_x = to_svg_x(dir.x * (geometry.viewport.x_max * 0.85))}
+        {@const arrow_y = to_svg_y(dir.y * (geometry.viewport.y_max * 0.85))}
+        <defs>
+          <marker id="unbounded-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#f76707" opacity="0.8" />
+          </marker>
+        </defs>
+        <line
+          x1={arrow_x - dir.x * 30}
+          y1={arrow_y + dir.y * 30}
+          x2={arrow_x + dir.x * 10}
+          y2={arrow_y - dir.y * 10}
+          stroke="#f76707"
+          stroke-width="2.5"
+          opacity="0.8"
+          marker-end="url(#unbounded-arrow)"
+        />
+      {/each}
+    {/if}
+
     <!-- Infeasible indicator -->
     {#if geometry.is_infeasible}
       <text
@@ -529,6 +609,25 @@
         font-size="18"
         font-weight="600"
       >Infeasible</text>
+    {/if}
+
+    <!-- Constraint drag tooltip -->
+    {#if drag_tooltip_info}
+      {@const tx = Math.min(drag_tooltip_svg_x + 16, SVG_WIDTH - 140)}
+      {@const ty = Math.max(drag_tooltip_svg_y - 48, 8)}
+      <g>
+        <rect x={tx} y={ty} width="130" height={drag_tooltip_info.is_non_binding ? 28 : 42} rx="4" fill="#1a1d2e" stroke="#2a2d3a" stroke-width="1" opacity="0.95" />
+        {#if drag_tooltip_info.is_non_binding}
+          <text x={tx + 8} y={ty + 18} fill="#495162" font-size="11" font-family="JetBrains Mono, monospace">No effect</text>
+        {:else}
+          <text x={tx + 8} y={ty + 16} fill="#abb2bf" font-size="11" font-family="JetBrains Mono, monospace">RHS: {drag_tooltip_info.current_rhs.toFixed(1)}</text>
+          {#if drag_tooltip_info.objective_delta !== null}
+            <text x={tx + 8} y={ty + 32} fill={drag_tooltip_info.objective_delta >= 0 ? "#51cf66" : "#fa5252"} font-size="11" font-family="JetBrains Mono, monospace">
+              Profit: {drag_tooltip_info.objective_delta >= 0 ? "+" : ""}{drag_tooltip_info.objective_delta.toFixed(1)}
+            </text>
+          {/if}
+        {/if}
+      </g>
     {/if}
   </svg>
 
@@ -559,6 +658,27 @@
           <span class="constraint-name">{constraint.name}</span>
         </label>
       {/each}
+    </div>
+  {/if}
+
+  <!-- Integer toggle -->
+  {#if allow_toggle_integer}
+    <div class="integer-toggle-bar">
+      <label class="constraint-toggle">
+        <input
+          type="checkbox"
+          checked={integer_mode_active}
+          onchange={() => integer_mode_active = !integer_mode_active}
+        />
+        <span class="constraint-name">Require integer solutions</span>
+      </label>
+      {#if integer_mode_active && best_integer_point && geometry.optimal_value !== null}
+        {@const gap = Math.abs(geometry.optimal_value - best_integer_point.objective)}
+        {@const gap_pct = geometry.optimal_value !== 0 ? (gap / Math.abs(geometry.optimal_value)) * 100 : 0}
+        <span class="relaxation-gap">
+          LP relaxation gap: {gap.toFixed(1)} ({gap_pct.toFixed(1)}%)
+        </span>
+      {/if}
     </div>
   {/if}
 </div>
@@ -637,5 +757,27 @@
   .constraint-name {
     font-family: "JetBrains Mono", monospace;
     font-size: 0.8rem;
+  }
+
+  .integer-toggle-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .relaxation-gap {
+    font-size: 0.8rem;
+    font-family: "JetBrains Mono", monospace;
+    color: #e5c07b;
+  }
+
+  @media (max-width: 480px) {
+    .constraint-toggles {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
   }
 </style>
